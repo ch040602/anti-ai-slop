@@ -6,6 +6,23 @@ It is not an AI detector. It does not decide whether a person used AI. It review
 
 Use it when you want an agent to turn “this smells like AI slop” into an evidence-based review and a concrete revision plan.
 
+## Prompt Collection
+
+Start from the prompt library when you want a ready-to-run request:
+
+```text
+PROMPTS.md
+```
+
+- [Open the prompt collection](PROMPTS.md)
+- [Review prompts](PROMPTS.md#review-prompts)
+- [Rewrite prompts](PROMPTS.md#rewrite-prompts)
+- [UI and visual prompts](PROMPTS.md#ui-and-visual-prompts)
+- [Code and PR prompts](PROMPTS.md#code-and-pr-prompts)
+- [Data, localization, and planning prompts](PROMPTS.md#data-localization-and-planning-prompts)
+- [Research-aware prompts](PROMPTS.md#research-aware-prompts)
+- [Template prompts](PROMPTS.md#template-prompts)
+
 ## Quick Start
 
 Install the skill into your Codex skills directory:
@@ -275,6 +292,7 @@ Minimum finding format:
 anti-ai-slop/
 ├── SKILL.md
 ├── README.md
+├── PROMPTS.md
 ├── manifest.txt
 ├── protocols/
 ├── taxonomies/

@@ -1,5 +1,6 @@
 SKILL.md
 README.md
+PROMPTS.md
 manifest.txt
 protocols/review_workflow.md
 protocols/finding_format.md
