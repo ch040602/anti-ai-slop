@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+try:
+    from .common import Finding, iter_text_files, read_text, relpath, run_cli
+except ImportError:
+    from common import Finding, iter_text_files, read_text, relpath, run_cli
+
+
+VAGUE_TERMS = [
+    "seamless", "robust", "comprehensive", "powerful", "cutting-edge", "revolutionary",
+    "leverage", "unlock", "supercharge", "innovative", "world-class", "best-in-class",
+]
+EVIDENCE_TERMS = ["because", "measured", "evidence", "example", "acceptance", "validation", "specific"]
+
+
+def check(root: Path) -> list[Finding]:
+    findings: list[Finding] = []
+    pattern = re.compile(r"\b(" + "|".join(re.escape(term) for term in VAGUE_TERMS) + r")\b", re.IGNORECASE)
+    for path in iter_text_files(root):
+        rel = relpath(path, root)
+        if rel.startswith(".github/") or rel.startswith("research/"):
+            continue
+        text = read_text(path)
+        matches = pattern.findall(text)
+        if not matches:
+            continue
+        lower = text.lower()
+        evidence_count = sum(lower.count(term) for term in EVIDENCE_TERMS)
+        severity = "HIGH" if len(matches) >= 8 and evidence_count == 0 else "LOW"
+        if severity == "LOW" and len(matches) < 4:
+            continue
+        findings.append(Finding(severity, "vague-language", rel, f"Vague terms appear {len(matches)} times.", "Replace vague claims with mechanism, audience, constraint, or validation evidence.", ", ".join(sorted(set(m.lower() for m in matches)))[:200]))
+    return findings
+
+
+if __name__ == "__main__":
+    raise SystemExit(run_cli(check, "Vague Language Check"))

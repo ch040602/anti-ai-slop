@@ -6,6 +6,48 @@ It is not an AI detector. It does not decide whether a person used AI. It review
 
 Use it when you want an agent to turn “this smells like AI slop” into an evidence-based review and a concrete revision plan.
 
+This repository is now also a Spec Kit style Codex guardrail pack. It adds persistent principles, reusable prompts, validator scripts, CI examples, process docs, and a sample feature spec around the original review skill.
+
+## Guardrail Pack Mode
+
+Use the pack when you want the anti-slop review discipline to govern a whole repository, not only one draft.
+
+Core files:
+
+- `.specify/memory/constitution.md`
+- `.specify/memory/glossary.md`
+- `.specify/memory/architecture-principles.md`
+- `.specify/memory/product-principles.md`
+- `.specify/templates/overrides/*`
+- `AGENTS.md`
+- `.agents/skills/*/SKILL.md`
+- `codex/prompts/*.md`
+- `tools/validators/check_all.py`
+- `docs/process/*`
+- `docs/references/*`
+- `specs/000-anti-ai-slop-control-plane/*`
+
+Run the local coherence gate:
+
+```powershell
+python tools\validators\check_all.py --root . --format markdown
+```
+
+Generate inventory evidence:
+
+```powershell
+python tools\repo_inventory.py --root . --out specs\_meta\evidence\existing-code-scan.md
+```
+
+Apply the guardrails to another repository:
+
+```powershell
+python tools\apply_guardrails.py --target C:\path\to\repo --mode dry-run
+python tools\apply_guardrails.py --target C:\path\to\repo --mode merge
+```
+
+The merge mode copies missing guardrail files only. It does not overwrite target files.
+
 ## Prompt Collection
 
 Start from the prompt library when you want a ready-to-run request:
@@ -96,7 +138,7 @@ Good structure, clean grammar, simple language, common fonts, cards, bullets, or
 
 ## How It Works
 
-The skill is a Markdown-only Codex skill package. There is no runtime service, package install, API key, or background process.
+The review skill remains Markdown-first. The guardrail pack adds optional standard-library Python validators and helper scripts. There is no runtime service, package install, API key, or background process.
 
 When invoked, the agent should:
 
@@ -109,6 +151,22 @@ When invoked, the agent should:
 7. Format findings with `protocols/finding_format.md`.
 8. Apply fixes from `checklists/remediation_patterns.md`.
 9. Deliver a review report, rewrite brief, design addendum, or revised output using `templates/`.
+
+For repository-level work, start from `codex/prompts/00-apply-pack-to-existing-repo.md` and follow:
+
+```text
+inventory
+-> constitution / glossary / architecture principles
+-> spec
+-> clarify
+-> checklist
+-> plan
+-> tasks
+-> analyze
+-> implementation
+-> validation evidence
+-> PR review
+```
 
 ## Installation
 
@@ -221,6 +279,9 @@ Common configuration points:
 | Add modality-specific rules | `dimensions/*.md` |
 | Change final report shape | `templates/*.md` |
 | Update package file inventory | `manifest.txt` |
+| Change Spec Kit memory | `.specify/memory/*.md` |
+| Change validator behavior | `tools/validators/*.py` |
+| Change Codex workflow prompts | `codex/prompts/*.md` |
 
 Recommended editing rule: add a pattern only if it can be paired with a false-positive note and a concrete repair.
 
@@ -290,10 +351,19 @@ Minimum finding format:
 
 ```text
 anti-ai-slop/
+├── AGENTS.md
 ├── SKILL.md
 ├── README.md
 ├── PROMPTS.md
 ├── manifest.txt
+├── .specify/
+├── .agents/
+├── .github/
+├── codex/
+├── docs/
+├── specs/
+├── tools/
+├── tests/
 ├── protocols/
 ├── taxonomies/
 ├── checklists/
@@ -316,9 +386,17 @@ When updating the skill:
 Validate the file inventory:
 
 ```powershell
-$files = rg --files | Sort-Object
+$files = rg --files --hidden -g '!**/.git/**' -g '!**/.codex/**' -g '!**/__pycache__/**' -g '!*.pyc' | Sort-Object
 $manifest = Get-Content manifest.txt | Where-Object { $_.Trim() } | ForEach-Object { $_ -replace '/', '\' } | Sort-Object
 Compare-Object $manifest $files
 ```
 
 No output means the manifest matches the repository files.
+
+Validate coherence:
+
+```powershell
+python tools\validators\check_all.py --root . --format markdown
+python -m unittest discover -s tests
+python -m compileall tools tests
+```

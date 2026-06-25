@@ -48,6 +48,22 @@ Use this skill when the user asks to:
 
 ## Skill routing
 
+For repository-level guardrail work, start with:
+
+- `.specify/memory/constitution.md`
+- `.specify/memory/glossary.md`
+- `.specify/memory/architecture-principles.md`
+- `.specify/memory/product-principles.md`
+- `codex/prompts/00-apply-pack-to-existing-repo.md`
+
+Then run or recommend:
+
+```text
+python tools/validators/check_all.py --root . --format markdown
+```
+
+For single-artifact review work, start with the original review flow:
+
 Start with:
 
 - `protocols/review_workflow.md`
@@ -86,6 +102,17 @@ Use templates for final deliverables:
 - `templates/design_review_addendum.md`
 - `templates/rewrite_brief_template.md`
 
+Use validator tools for repository coherence:
+
+- `tools/validators/check_all.py`
+- `tools/validators/check_task_traceability.py`
+- `tools/validators/check_spec_coverage.py`
+- `tools/validators/check_glossary_terms.py`
+- `tools/validators/check_architecture_boundaries.py`
+- `tools/validators/check_dependency_justification.py`
+- `tools/validators/check_vague_language.py`
+- `tools/validators/check_placeholders.py`
+
 ## Standard review workflow
 
 1. **Define the output contract.** Identify audience, purpose, format, constraints, and success condition.
@@ -110,8 +137,16 @@ Use templates for final deliverables:
 
 ```text
 anti-ai-slop/
+├── AGENTS.md
 ├── SKILL.md
 ├── README.md
+├── .specify/
+├── .agents/
+├── codex/
+├── docs/
+├── specs/
+├── tools/
+├── tests/
 ├── manifest.txt
 ├── protocols/
 │   ├── review_workflow.md
