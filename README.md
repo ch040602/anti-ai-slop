@@ -22,6 +22,14 @@ python tools\validators\check_all.py --root . --profile pack-self --format markd
 python -m unittest discover -s tests
 ```
 
+![Anti-AI Slop guardrail pack demo](assets/readme-demo.gif)
+
+Regenerate the README demo GIF with:
+
+```powershell
+python tools\generate_readme_demo_gif.py
+```
+
 ## Guardrail Pack Mode
 
 Use the pack when you want the anti-slop review discipline to govern a whole repository, not only one draft.
@@ -100,6 +108,7 @@ Apply behavior:
 - `merge` copies missing guardrail files from the maintained `manifest.txt` surface only.
 - Existing target files are preserved.
 - Test-only files and generated cache artifacts such as `tests/`, `__pycache__`, `*.pyc`, and `.pytest_cache` are ignored in dry-run and merge plans.
+- Missing or unsafe manifest entries are reported as warnings in stderr and JSON reports.
 
 Other guardrail maintenance tools:
 
@@ -237,6 +246,47 @@ git clone https://github.com/ch040602/anti-ai-slop.git C:\Users\%USERNAME%\.code
 ```
 
 Restart Codex or start a new session.
+
+### Claude Code
+
+Claude Code can use this repository in two ways:
+
+1. As a skill: copy or clone this repository to `.claude/skills/anti-ai-slop/` or your user-level Claude skills directory, keeping `SKILL.md` at the skill root. Invoke it with `/anti-ai-slop` when slash skills are available.
+2. As a repository guardrail pack: apply the pack to a target repository, then keep `CLAUDE.md`, `SKILL.md`, `.specify/`, `docs/`, `codex/prompts/`, and `tools/validators/` under version control.
+
+Example project-local skill install:
+
+```powershell
+mkdir .claude\skills
+git clone https://github.com/ch040602/anti-ai-slop.git .claude\skills\anti-ai-slop
+```
+
+Example guardrail-pack install:
+
+```powershell
+git clone https://github.com/ch040602/anti-ai-slop.git C:\tmp\anti-ai-slop
+python C:\tmp\anti-ai-slop\tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode dry-run
+python C:\tmp\anti-ai-slop\tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode merge --manifest-out C:\path\to\repo\.anti-ai-slop-apply-manifest.json
+```
+
+Claude Code reads project guidance from `CLAUDE.md`, and Claude skills use `SKILL.md` files. This repository includes both `AGENTS.md` for Codex-style agents and `CLAUDE.md` for Claude Code project guidance. See Anthropic's Claude Code docs for [memory files](https://docs.anthropic.com/en/docs/claude-code/memory) and [skills](https://docs.anthropic.com/en/docs/claude-code/skills).
+
+### Other Agent Runtimes
+
+The guardrail pack is agent-agnostic at the repository level:
+
+- Use `SKILL.md` as the primary human/agent instruction file.
+- Use `AGENTS.md` for Codex-compatible agents.
+- Use `CLAUDE.md` for Claude Code.
+- Use `codex/prompts/*.md` as portable prompt templates even outside Codex.
+- Use `tools/validators/check_all.py` in local scripts or CI to enforce the same checks without relying on any agent runtime.
+
+Minimal non-Codex workflow:
+
+```powershell
+python tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode merge
+python C:\path\to\repo\tools\validators\check_all.py --root C:\path\to\repo --profile target-repo --format markdown
+```
 
 ### Manual Copy
 
@@ -411,6 +461,7 @@ Minimum finding format:
 ```text
 anti-ai-slop/
 ├── AGENTS.md
+├── CLAUDE.md
 ├── SKILL.md
 ├── README.md
 ├── PROMPTS.md
@@ -423,6 +474,7 @@ anti-ai-slop/
 ├── specs/
 ├── tools/
 ├── tests/
+├── assets/
 ├── protocols/
 ├── taxonomies/
 ├── checklists/

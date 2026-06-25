@@ -17,6 +17,50 @@ def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def gif_metadata(path: Path) -> tuple[int, int, int]:
+    data = path.read_bytes()
+    if data[:6] not in {b"GIF87a", b"GIF89a"}:
+        raise AssertionError("Not a GIF file")
+    width = int.from_bytes(data[6:8], "little")
+    height = int.from_bytes(data[8:10], "little")
+    flags = data[10]
+    offset = 13
+    if flags & 0x80:
+        offset += 3 * (2 ** ((flags & 0x07) + 1))
+
+    frames = 0
+    while offset < len(data):
+        block = data[offset]
+        offset += 1
+        if block == 0x3B:
+            break
+        if block == 0x21:
+            offset += 1
+            while True:
+                size = data[offset]
+                offset += 1
+                if size == 0:
+                    break
+                offset += size
+        elif block == 0x2C:
+            frames += 1
+            flags = data[offset + 8]
+            offset += 9
+            if flags & 0x80:
+                offset += 3 * (2 ** ((flags & 0x07) + 1))
+            offset += 1
+            while True:
+                size = data[offset]
+                offset += 1
+                if size == 0:
+                    break
+                offset += size
+        else:
+            raise AssertionError(f"Unexpected GIF block 0x{block:02x}")
+
+    return width, height, frames
+
+
 class HelperToolTests(unittest.TestCase):
     def test_bootstrap_feature_replaces_path_tokens(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -335,6 +379,143 @@ class HelperToolTests(unittest.TestCase):
             self.assertEqual("# Existing target README\n", (target / "README.md").read_text(encoding="utf-8"))
             self.assertFalse((target / "tests/test_helper_tools.py").exists())
             self.assertFalse((target / "tools/__pycache__/apply_guardrails.cpython-313.pyc").exists())
+
+    def test_apply_guardrails_reports_missing_manifest_entries(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source"
+            target = root / "target"
+            report = root / "report.json"
+            write(source / "manifest.txt", "AGENTS.md\nmissing.md\n")
+            write(source / "AGENTS.md", "# Agents\n")
+            write(target / "README.md", "# Target\n")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(repo_root / "tools/apply_guardrails.py"),
+                    "--source",
+                    str(source),
+                    "--target",
+                    str(target),
+                    "--mode",
+                    "dry-run",
+                    "--json-out",
+                    str(report),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("copy AGENTS.md", result.stdout)
+            self.assertIn("missing manifest entry missing.md", result.stderr)
+            data = json.loads(report.read_text(encoding="utf-8"))
+            self.assertIn("missing manifest entry missing.md", data["warnings"])
+
+    def test_apply_guardrails_manifest_is_authoritative_even_when_entries_are_missing(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source"
+            target = root / "target"
+            write(source / "manifest.txt", "missing.md\n")
+            write(source / ".specify/memory/constitution.md", "# Constitution\n")
+            write(target / "README.md", "# Target\n")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(repo_root / "tools/apply_guardrails.py"),
+                    "--source",
+                    str(source),
+                    "--target",
+                    str(target),
+                    "--mode",
+                    "dry-run",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("missing manifest entry missing.md", result.stderr)
+            self.assertNotIn(".specify/memory/constitution.md", result.stdout)
+
+    def test_apply_guardrails_applied_target_passes_target_repo_gate(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            manifest = target / ".anti-ai-slop-apply-manifest.json"
+            write(target / "README.md", "# Target\n")
+
+            apply_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(repo_root / "tools/apply_guardrails.py"),
+                    "--source",
+                    str(repo_root),
+                    "--target",
+                    str(target),
+                    "--mode",
+                    "merge",
+                    "--manifest-out",
+                    str(manifest),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, apply_result.returncode, apply_result.stderr)
+            self.assertTrue((target / "AGENTS.md").exists())
+            self.assertTrue((target / "tools/validators/check_all.py").exists())
+            self.assertTrue(manifest.exists())
+
+            check_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(target / "tools/validators/check_all.py"),
+                    "--root",
+                    str(target),
+                    "--profile",
+                    "target-repo",
+                    "--format",
+                    "markdown",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, check_result.returncode, check_result.stdout + check_result.stderr)
+            self.assertIn("Score: 100", check_result.stdout)
+
+    def test_generate_readme_demo_gif_is_reproducible_without_external_dependency(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        script = repo_root / "tools/generate_readme_demo_gif.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "readme-demo.gif"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--out",
+                    str(out),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual((960, 540, 20), gif_metadata(out))
+            self.assertNotIn("from PIL", script.read_text(encoding="utf-8"))
+            self.assertNotIn("import PIL", script.read_text(encoding="utf-8"))
 
     def test_repo_inventory_scans_codex_parent_root_and_skips_repo_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

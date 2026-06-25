@@ -1,11 +1,11 @@
 # Existing Code Scan
 
 - Root: `C:\Users\hcslab_523\.codex\skills\anti-ai-slop`
-- Files: 95
+- Files: 98
 
 ## Top Directories
 
-- `tools`: 19
+- `tools`: 20
 - `dimensions`: 11
 - `checklists`: 10
 - `.specify`: 8
@@ -21,19 +21,20 @@
 - `.gitignore`: 1
 - `AGENTS.md`: 1
 - `CHANGELOG.md`: 1
+- `CLAUDE.md`: 1
 - `dependency-baseline.json`: 1
 - `manifest.txt`: 1
 - `PROMPTS.md`: 1
-- `README.md`: 1
 
 ## File Types
 
-- `.md`: 59
-- `.py`: 24
+- `.md`: 60
+- `.py`: 25
 - `.yml`: 6
 - `[none]`: 3
 - `.json`: 1
 - `.txt`: 1
+- `.gif`: 1
 - `.yaml`: 1
 
 ## Priority Files

@@ -54,6 +54,24 @@ class TestLayoutTests(unittest.TestCase):
             self.assertIn(term, skill)
         self.assertNotIn("There is no JSON config", readme)
 
+    def test_readme_documents_multi_agent_usage_and_demo_regeneration(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        manifest = (root / "manifest.txt").read_text(encoding="utf-8")
+
+        for term in [
+            "### Claude Code",
+            ".claude\\skills\\anti-ai-slop",
+            "CLAUDE.md",
+            "### Other Agent Runtimes",
+            "tools\\generate_readme_demo_gif.py",
+            "assets/readme-demo.gif",
+        ]:
+            self.assertIn(term, readme)
+
+        self.assertIn("CLAUDE.md", manifest)
+        self.assertIn("tools/generate_readme_demo_gif.py", manifest)
+
 
 if __name__ == "__main__":
     unittest.main()

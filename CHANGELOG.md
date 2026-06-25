@@ -11,6 +11,10 @@
 - Updated `apply_guardrails.py` reports and manifests to emit the pack `VERSION` as `tool_version`.
 - Updated `apply_guardrails.py` to ignore generated cache artifacts in dry-run and merge copy plans.
 - Updated `apply_guardrails.py` to use the maintained `manifest.txt` pack surface for migration plans.
+- Added manifest-entry warnings and an apply-to-target validation test for `apply_guardrails.py`.
+- Added a README demo GIF for the guardrail pack workflow.
+- Added a stdlib-only README demo GIF generator so the binary asset is reproducible.
+- Added `CLAUDE.md` and README guidance for Claude Code and other agent runtimes.
 - Updated workflow examples and documented Semgrep version policy.
 
 ## 0.1.0 - 2026-06-05

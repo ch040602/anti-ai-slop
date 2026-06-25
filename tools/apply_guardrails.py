@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -53,22 +54,28 @@ def should_copy(rel: Path) -> bool:
     return not is_generated_artifact(rel) and not is_test_only_artifact(rel)
 
 
-def iter_manifest_files(source_root: Path) -> list[Path]:
+def iter_manifest_files(source_root: Path) -> tuple[list[Path], list[str]]:
     manifest = source_root / MANIFEST_PATH
     if not manifest.exists():
-        return []
+        return [], []
     files: list[Path] = []
+    warnings: list[str] = []
     for line in manifest.read_text(encoding="utf-8").splitlines():
         item = line.strip()
         if not item:
             continue
         rel = Path(item)
-        if rel.is_absolute() or ".." in rel.parts or not should_copy(rel):
+        if rel.is_absolute() or ".." in rel.parts:
+            warnings.append(f"unsafe manifest entry {item}")
+            continue
+        if not should_copy(rel):
             continue
         source = source_root / rel
         if source.is_file():
             files.append(source)
-    return files
+        else:
+            warnings.append(f"missing manifest entry {rel.as_posix()}")
+    return files, warnings
 
 
 def iter_legacy_guardrail_files(source_root: Path) -> list[Path]:
@@ -86,14 +93,17 @@ def iter_legacy_guardrail_files(source_root: Path) -> list[Path]:
     return files
 
 
-def iter_copy_sources(source_root: Path) -> list[Path]:
-    manifest_files = iter_manifest_files(source_root)
-    return manifest_files if manifest_files else iter_legacy_guardrail_files(source_root)
+def iter_copy_sources(source_root: Path) -> tuple[list[Path], list[str]]:
+    manifest_files, warnings = iter_manifest_files(source_root)
+    if (source_root / MANIFEST_PATH).exists():
+        return manifest_files, warnings
+    return iter_legacy_guardrail_files(source_root), warnings
 
 
-def copy_missing(source_root: Path, target_root: Path, mode: str) -> list[str]:
+def copy_missing(source_root: Path, target_root: Path, mode: str) -> tuple[list[str], list[str]]:
     actions: list[str] = []
-    for source in iter_copy_sources(source_root):
+    sources, warnings = iter_copy_sources(source_root)
+    for source in sources:
         rel = source.relative_to(source_root)
         target = target_root / rel
         if target.exists():
@@ -103,10 +113,10 @@ def copy_missing(source_root: Path, target_root: Path, mode: str) -> list[str]:
         if mode == "merge":
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-    return actions
+    return actions, warnings
 
 
-def build_report(source: Path, target: Path, mode: str, actions: list[str]) -> dict[str, object]:
+def build_report(source: Path, target: Path, mode: str, actions: list[str], warnings: list[str]) -> dict[str, object]:
     return {
         "schema_version": 1,
         "tool": "apply_guardrails",
@@ -118,6 +128,7 @@ def build_report(source: Path, target: Path, mode: str, actions: list[str]) -> d
         "target_exists": target.exists(),
         "changed": mode == "merge" and any(action.startswith("copy ") for action in actions),
         "actions": actions,
+        "warnings": warnings,
     }
 
 
@@ -143,8 +154,8 @@ def main() -> int:
     validate_report_output_path(json_out, target, args.mode)
     if manifest_out and manifest_out.exists():
         raise SystemExit(f"Manifest already exists: {manifest_out}")
-    actions = copy_missing(source, target, args.mode)
-    report = build_report(source, target, args.mode, actions)
+    actions, warnings = copy_missing(source, target, args.mode)
+    report = build_report(source, target, args.mode, actions, warnings)
     if json_out:
         json_out.parent.mkdir(parents=True, exist_ok=True)
         json_out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -153,6 +164,8 @@ def main() -> int:
         manifest_out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     for action in actions:
         print(action)
+    for warning in warnings:
+        print(warning, file=sys.stderr)
     return 0
 
 

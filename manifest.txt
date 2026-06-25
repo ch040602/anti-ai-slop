@@ -17,7 +17,9 @@
 .specify/templates/overrides/spec-template.md
 .specify/templates/overrides/tasks-template.md
 AGENTS.md
+assets/readme-demo.gif
 CHANGELOG.md
+CLAUDE.md
 checklists/ai-slop.md
 checklists/coherence.md
 checklists/dependency.md
@@ -75,6 +77,7 @@ tests/test_validator_core.py
 tests/test_workflow_examples.py
 tools/apply_guardrails.py
 tools/bootstrap_feature.py
+tools/generate_readme_demo_gif.py
 tools/resource_catalog_freshness.py
 tools/repo_inventory.py
 tools/validators/check_all.py
