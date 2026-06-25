@@ -1,63 +1,186 @@
-# Anti-AI Slop Skill
+# Anti-AI Slop
 
-Anti-AI Slop is a Codex skill for reviewing and improving outputs that feel generic, template-like, over-smoothed, or AI-scented.
+[![Spec coherence](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml)
+[![No AI slop](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml)
 
-It is not an AI detector. It does not decide whether a person used AI. It reviews visible quality signals: weak specificity, proof-shaped unreliability, generic rhythm, decorative UI, fake precision, unowned code, chart slop, localization mismatch, and other patterns that reduce trust or usefulness.
+Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for turning vague "this feels generic" feedback into evidence-backed review, rewrite, and validation work.
 
-Use it when you want an agent to turn “this smells like AI slop” into an evidence-based review and a concrete revision plan.
+It is not an AI detector. It does not decide whether a person used AI. It reviews visible quality signals: weak specificity, unsupported claims, template residue, decorative UI, proof-shaped citations, unowned generated code, chart noise, and localization mismatch.
 
-This repository is now also a Spec Kit style Codex guardrail pack. It adds persistent principles, reusable prompts, validator scripts, CI examples, process docs, and a sample feature spec around the original review skill.
+## GitHub About Metadata
 
-## Choose a Mode
+Description:
 
-| Mode | Use when | Start here |
-|---|---|---|
-| Review skill | You want critique, rewrite guidance, or output QA for one artifact. | `$anti-ai-slop Review ...` |
-| Guardrail pack | You want repository-level specs, prompts, validators, CI examples, and migration helpers. | `python tools\validators\check_all.py --root . --profile pack-self --format markdown` |
+```text
+Evidence-backed Codex skill and Spec Kit guardrail pack for reviewing generic, template-like, or low-specificity outputs without making AI-authorship claims.
+```
 
-For a new checkout, run the validation gate first:
+Tags:
+
+```text
+codex-skill, spec-kit, guardrails, ai-slop, output-quality, prompt-engineering, code-review, documentation-review, validation, agent-workflows
+```
+
+## Highlights
+
+- A Codex skill for reviewing generic or template-like artifacts with evidence, fixes, and verification.
+- Spec Kit memory files, prompts, checklists, and CI examples for repository-level guardrails.
+- Standard-library Python validators for specs, tasks, evidence links, glossary terms, placeholders, and dependency justification.
+- A migration helper that can dry-run or merge the guardrail surface into another repository without overwriting existing files.
+
+## Demo
+
+![Anti-AI Slop validator, migration, and review demo](assets/readme-demo.gif)
+
+The demo is generated from `tools/generate_readme_demo_gif.py` by executing real repository commands and rendering their stdout. It currently captures the coherence gate, repository inventory, and a dry-run guardrail apply against a temporary target repository.
+
+Regenerate it with:
+
+```powershell
+python tools\generate_readme_demo_gif.py
+```
+
+## Quick Start
+
+Install the skill into your Codex skills directory:
+
+```powershell
+git clone https://github.com/ch040602/anti-ai-slop.git C:\Users\%USERNAME%\.codex\skills\anti-ai-slop
+```
+
+Start a new Codex session so the skill list refreshes, then invoke it directly:
+
+```text
+$anti-ai-slop Review this README for generic claims, missing proof, and concrete fixes.
+```
+
+Run the repository self-check:
 
 ```powershell
 python tools\validators\check_all.py --root . --profile pack-self --format markdown
 python -m unittest discover -s tests
 ```
 
-![Anti-AI Slop guardrail pack demo](assets/readme-demo.gif)
+Expected healthy output:
 
-Regenerate the README demo GIF with:
+```text
+# Anti-AI Slop Coherence Report (pack-self)
 
-```powershell
-python tools\generate_readme_demo_gif.py
+Score: 100
+CRITICAL: 0
+HIGH: 0
+MEDIUM: 0
+LOW: 0
+
+No findings.
 ```
 
-## Guardrail Pack Mode
+## Use It Two Ways
 
-Use the pack when you want the anti-slop review discipline to govern a whole repository, not only one draft.
+| Mode | Use it for | Entry point |
+|---|---|---|
+| Review skill | Critique or rewrite one artifact: README, report, UI, deck, PR, chart, image prompt, or product copy. | `$anti-ai-slop Review ...` |
+| Guardrail pack | Add spec-first anti-slop gates to a repository with prompts, memory files, validators, and CI examples. | `python tools\apply_guardrails.py ...` |
 
-Core files:
+## Review Skill
 
-- `.specify/memory/constitution.md`
-- `.specify/memory/glossary.md`
-- `.specify/memory/architecture-principles.md`
-- `.specify/memory/product-principles.md`
-- `.specify/templates/overrides/*`
-- `AGENTS.md`
-- `.agents/skills/*/SKILL.md`
-- `codex/prompts/*.md`
-- `tools/validators/check_all.py`
-- `docs/process/*`
-- `docs/references/*`
-- `specs/000-anti-ai-slop-control-plane/*`
+The review skill converts broad critique into repairable findings:
 
-Run the local coherence gate:
+```text
+visible evidence
+-> signal category
+-> false-positive check
+-> contract impact
+-> missing specificity input
+-> concrete fix
+-> verification criterion
+```
+
+Example prompt:
+
+```text
+$anti-ai-slop Audit this product page for template-like claims and rewrite the weak sections.
+```
+
+Example finding shape:
+
+```md
+### P1 - Generic value proposition
+- Evidence: The hero says "Supercharge your workflow" without naming the user task.
+- Why it matters: The sentence could fit almost any SaaS product.
+- Fix: Name the workflow, input, output, and measurable result.
+- Example revision: "Turn support-call transcripts into QA-ready coaching notes in under 3 minutes."
+- Verification: A reader can identify the user, input, transformation, and output from the first screen.
+```
+
+The skill covers:
+
+- writing, documentation, explainers, and README files;
+- reports, policy notes, research summaries, and executive analysis;
+- landing pages, product pages, sales copy, and brand language;
+- websites, SaaS screens, dashboards, and design systems;
+- slide decks and presentation narratives;
+- generated images, thumbnails, mockups, and hero visuals;
+- code snippets, generated frontend, PR descriptions, and technical docs;
+- charts, KPI cards, analytics screenshots, and BI mockups;
+- localization, translated copy, and region-specific messaging;
+- roadmaps, launch plans, implementation plans, and operational specs.
+
+## Guardrail Pack
+
+The guardrail pack applies the same discipline to a whole repository. It ships:
+
+- durable project memory in `.specify/memory/`;
+- Spec Kit override templates in `.specify/templates/overrides/`;
+- Codex prompts in `codex/prompts/`;
+- local agent skills in `.agents/skills/`;
+- Markdown checklists for requirements, PR review, dependency review, release, security, and AI-slop review;
+- standard-library Python validators under `tools/validators/`;
+- CI examples under `.github/workflows/`.
+
+Apply it to another repository:
+
+```powershell
+git clone https://github.com/ch040602/anti-ai-slop.git C:\tmp\anti-ai-slop
+
+python C:\tmp\anti-ai-slop\tools\apply_guardrails.py `
+  --source C:\tmp\anti-ai-slop `
+  --target C:\path\to\repo `
+  --mode dry-run
+
+python C:\tmp\anti-ai-slop\tools\apply_guardrails.py `
+  --source C:\tmp\anti-ai-slop `
+  --target C:\path\to\repo `
+  --mode merge `
+  --manifest-out C:\path\to\repo\.anti-ai-slop-apply-manifest.json
+```
+
+Apply behavior:
+
+- `dry-run` reports planned copies and does not write inside the target repository.
+- `merge` copies missing guardrail files from `manifest.txt`.
+- Existing target files are preserved.
+- Test-only files and generated cache artifacts are excluded from apply plans.
+
+## Validator Profiles
+
+| Profile | Scope |
+|---|---|
+| `pack-self` | Full self-check for this repository. |
+| `target-repo` | Service-code-oriented checks for a repository that adopted the pack. |
+| `feature --feature 123-feature-name` | Checks scoped to one feature directory under `specs/`. |
+| `ci-strict` | CI gate using the full pack scope. |
+
+Core command:
 
 ```powershell
 python tools\validators\check_all.py --root . --profile pack-self --format markdown
 ```
 
-Validator surface:
+The validator suite checks task traceability, spec coverage, evidence links, glossary terms, architecture boundaries, dependency justification, manifest integrity, resource-catalog freshness, workflow integrity, vague language, placeholders, and template tokens.
 
-- `tools/validators/check_all.py`
+## Validator Surface
+
 - `tools/validators/check_config_integrity.py`
 - `tools/validators/check_task_traceability.py`
 - `tools/validators/check_spec_coverage.py`
@@ -71,155 +194,12 @@ Validator surface:
 - `tools/validators/check_workflow_integrity.py`
 - `tools/validators/check_vague_language.py`
 - `tools/validators/check_placeholders.py`
-
-Validation profiles:
-
-| Profile | Scope |
-|---|---|
-| `pack-self` | Full self-check for this guardrail pack. |
-| `target-repo` | Service-code-oriented paths in a repository that adopted the pack. |
-| `feature --feature 123-feature-name` | Findings scoped to one feature directory under `specs/`. |
-| `ci-strict` | CI gate using the full pack scope. |
-
-Generate inventory evidence:
-
-```powershell
-python tools\repo_inventory.py --root . --out specs\_meta\evidence\existing-code-scan.md
-python tools\repo_inventory.py --root . --format json --out specs\_meta\evidence\existing-code-scan.json
-```
-
-Bootstrap a feature workspace from the local Spec Kit override templates:
-
-```powershell
-python tools\bootstrap_feature.py 123-feature-name --name "Feature Name" --arguments "Original feature request"
-```
-
-Apply the guardrails to another repository:
-
-```powershell
-python tools\apply_guardrails.py --target C:\path\to\repo --mode dry-run
-python tools\apply_guardrails.py --target C:\path\to\repo --mode merge --manifest-out C:\path\to\repo\.anti-ai-slop-apply-manifest.json
-```
-
-Apply behavior:
-
-- `dry-run` reports planned copies and does not write inside the target repository.
-- `--json-out` can save a dry-run report, but the output path must be outside the target repository.
-- `merge` copies missing guardrail files from the maintained `manifest.txt` surface only.
-- Existing target files are preserved.
-- Test-only files and generated cache artifacts such as `tests/`, `__pycache__`, `*.pyc`, and `.pytest_cache` are ignored in dry-run and merge plans.
-- Missing or unsafe manifest entries are reported as warnings in stderr and JSON reports.
-
-Other guardrail maintenance tools:
-
 - `tools/resource_catalog_freshness.py`
 - `dependency-baseline.json`
 
-## Prompt Collection
+## Workflow
 
-Start from the prompt library when you want a ready-to-run request:
-
-```text
-PROMPTS.md
-```
-
-- [Open the prompt collection](PROMPTS.md)
-- [Review prompts](PROMPTS.md#review-prompts)
-- [Rewrite prompts](PROMPTS.md#rewrite-prompts)
-- [UI and visual prompts](PROMPTS.md#ui-and-visual-prompts)
-- [Code and PR prompts](PROMPTS.md#code-and-pr-prompts)
-- [Data, localization, and planning prompts](PROMPTS.md#data-localization-and-planning-prompts)
-- [Research-aware prompts](PROMPTS.md#research-aware-prompts)
-- [Template prompts](PROMPTS.md#template-prompts)
-
-## Quick Start
-
-Install the skill into your Codex skills directory:
-
-```powershell
-git clone https://github.com/ch040602/anti-ai-slop.git C:\Users\%USERNAME%\.codex\skills\anti-ai-slop
-```
-
-Then start a new Codex session so the skill list is refreshed.
-
-Use it explicitly:
-
-```text
-$anti-ai-slop Review this landing page copy for AI slop and rewrite the weak parts.
-```
-
-```text
-$anti-ai-slop Audit this README for generic-output patterns, missing proof, and concrete fixes.
-```
-
-```text
-$anti-ai-slop Check this UI concept for SaaS-average design slop and give component-level changes.
-```
-
-If your Codex environment already has the skill installed locally, the usable skill name is:
-
-```text
-anti-ai-slop
-```
-
-## What It Does
-
-Anti-AI Slop helps review and improve:
-
-- writing, documentation, README files, and explainers;
-- academic, analytical, policy, and executive reports;
-- marketing copy, landing pages, product pages, and sales material;
-- essays, founder notes, social posts, and thought-leadership drafts;
-- websites, SaaS UI, dashboards, app screens, and design systems;
-- slide decks, pitch decks, lecture decks, and executive presentations;
-- generated images, thumbnails, hero visuals, mockups, and visual concepts;
-- code snippets, PR descriptions, technical docs, scripts, and generated frontend;
-- charts, KPI cards, analytics screenshots, and BI mockups;
-- localized, translated, bilingual, or region-specific outputs;
-- roadmaps, implementation plans, launch plans, and operational specs.
-
-The skill turns broad critique into specific revision work:
-
-```text
-visible evidence
--> signal category
--> false-positive check
--> contract impact
--> specificity input needed
--> remediation pattern
--> concrete revision
--> verification criterion
-```
-
-## What It Does Not Do
-
-Anti-AI Slop does not:
-
-- make forensic authorship claims;
-- accuse a person or organization of using AI;
-- optimize text to evade AI detectors;
-- replace factual verification, legal review, security review, accessibility review, or domain expert review;
-- remove useful structure just because it resembles a common AI pattern.
-
-Good structure, clean grammar, simple language, common fonts, cards, bullets, or polished visuals are not defects by themselves. They become issues only when they weaken purpose, credibility, specificity, usability, or brand fit.
-
-## How It Works
-
-The review skill remains Markdown-first. The guardrail pack adds optional standard-library Python validators and helper scripts. There is no runtime service, package install, API key, or background process.
-
-When invoked, the agent should:
-
-1. Read `SKILL.md`.
-2. Define the output contract: audience, job, medium, constraints, evidence needs, and success condition.
-3. Classify the work purpose using `taxonomies/task_purpose_matrix.md`.
-4. Run the universal gate in `protocols/output_design_review_gate.md`.
-5. Load the relevant modality file under `dimensions/`.
-6. Use `research/field_reported_ai_smell_patterns.md` when the task asks about AI slop, AI-smell, detector-like cleanup, Reddit/GitHub-reported patterns, PR slop, code slop, or public perception patterns.
-7. Format findings with `protocols/finding_format.md`.
-8. Apply fixes from `checklists/remediation_patterns.md`.
-9. Deliver a review report, rewrite brief, design addendum, or revised output using `templates/`.
-
-For repository-level work, start from `codex/prompts/00-apply-pack-to-existing-repo.md` and follow:
+Repository work follows this path:
 
 ```text
 inventory
@@ -235,57 +215,27 @@ inventory
 -> PR review
 ```
 
-## Installation
+The pack is designed around traceability: requirements should map to tasks, tasks should map to validation, and findings should include evidence, impact, fix, and verification.
 
-### Codex
-
-Clone this repository into your Codex skills directory:
-
-```powershell
-git clone https://github.com/ch040602/anti-ai-slop.git C:\Users\%USERNAME%\.codex\skills\anti-ai-slop
-```
-
-Restart Codex or start a new session.
+## Installation In Other Runtimes
 
 ### Claude Code
 
-Claude Code can use this repository in two ways:
-
-1. As a skill: copy or clone this repository to `.claude/skills/anti-ai-slop/` or your user-level Claude skills directory, keeping `SKILL.md` at the skill root. Invoke it with `/anti-ai-slop` when slash skills are available.
-2. As a repository guardrail pack: apply the pack to a target repository, then keep `CLAUDE.md`, `SKILL.md`, `.specify/`, `docs/`, `codex/prompts/`, and `tools/validators/` under version control.
-
-Example project-local skill install:
+Use this repository as a skill:
 
 ```powershell
 mkdir .claude\skills
 git clone https://github.com/ch040602/anti-ai-slop.git .claude\skills\anti-ai-slop
 ```
 
-Example guardrail-pack install:
-
-```powershell
-git clone https://github.com/ch040602/anti-ai-slop.git C:\tmp\anti-ai-slop
-python C:\tmp\anti-ai-slop\tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode dry-run
-python C:\tmp\anti-ai-slop\tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode merge --manifest-out C:\path\to\repo\.anti-ai-slop-apply-manifest.json
-```
-
-Claude Code reads project guidance from `CLAUDE.md`, and Claude skills use `SKILL.md` files. This repository includes both `AGENTS.md` for Codex-style agents and `CLAUDE.md` for Claude Code project guidance. See Anthropic's Claude Code docs for [memory files](https://docs.anthropic.com/en/docs/claude-code/memory) and [skills](https://docs.anthropic.com/en/docs/claude-code/skills).
+Or apply it as a guardrail pack with `tools\apply_guardrails.py`. This repository includes both `AGENTS.md` for Codex-style agents and `CLAUDE.md` for Claude Code project guidance.
 
 ### Other Agent Runtimes
 
-The guardrail pack is agent-agnostic at the repository level:
-
-- Use `SKILL.md` as the primary human/agent instruction file.
-- Use `AGENTS.md` for Codex-compatible agents.
-- Use `CLAUDE.md` for Claude Code.
-- Use `codex/prompts/*.md` as portable prompt templates even outside Codex.
-- Use `tools/validators/check_all.py` in local scripts or CI to enforce the same checks without relying on any agent runtime.
-
-Minimal non-Codex workflow:
+Use `SKILL.md` as the primary instruction file, keep `AGENTS.md` or `CLAUDE.md` when the runtime understands them, and run the validators directly in scripts or CI:
 
 ```powershell
-python tools\apply_guardrails.py --source C:\tmp\anti-ai-slop --target C:\path\to\repo --mode merge
-python C:\path\to\repo\tools\validators\check_all.py --root C:\path\to\repo --profile target-repo --format markdown
+python tools\validators\check_all.py --root C:\path\to\repo --profile target-repo --format markdown
 ```
 
 ### Manual Copy
@@ -296,224 +246,77 @@ Copy the repository folder into any Codex-compatible skills directory:
 <codex-home>/skills/anti-ai-slop/
 ```
 
-The root file must remain:
-
-```text
-SKILL.md
-```
-
-### From an Existing Checkout
-
-If you already cloned the repository elsewhere, copy or symlink the folder into your skills directory. Keep the directory name and frontmatter name aligned:
-
-```yaml
-name: anti-ai-slop
-```
-
-## Usage
-
-### Review Mode
-
-Use when you want critique and fixes:
-
-```text
-$anti-ai-slop Review this report for AI slop, unsupported claims, and weak recommendation structure.
-```
-
-Expected output:
-
-- verdict;
-- output contract;
-- scores and readiness;
-- signal clusters;
-- priority findings;
-- concrete fixes;
-- acceptance criteria.
-
-### Rewrite Mode
-
-Use when you want the artifact improved directly:
-
-```text
-$anti-ai-slop Rewrite this product page so it sounds specific, credible, and less template-like.
-```
-
-Expected output:
-
-- short diagnosis;
-- missing context if needed;
-- revised copy or structure;
-- notes on what changed and why.
-
-### Design Addendum Mode
-
-Use when you want QA criteria added to another deliverable:
-
-```text
-$anti-ai-slop Add output-quality and anti-slop acceptance criteria to this implementation plan.
-```
-
-Expected output:
-
-- purpose-fit checks;
-- evidence checks;
-- modality-specific QA;
-- AI-slop risk notes;
-- acceptance criteria.
-
-### Research-Aware Mode
-
-Use when you want field-reported patterns included:
-
-```text
-$anti-ai-slop Use the field-reported AI-smell register to audit this LinkedIn post and give a before/after rewrite.
-```
-
-The skill should consult `research/field_reported_ai_smell_patterns.md` and still avoid authorship claims.
+Keep `SKILL.md` at the skill root.
 
 ## Configuration
 
-The review skill is configured by editing Markdown files. The repository guardrail pack also supports optional shared validator config files at `config/guardrails.json`, `config/guardrails.yaml`, and `config/guardrails.yml`; local overlays such as `config/guardrails.local.json` are intentionally rejected until merge semantics are implemented. There is no environment-variable configuration surface.
-
-Common configuration points:
+Most behavior is configured by editing Markdown files:
 
 | Need | Edit |
 |---|---|
-| Change top-level routing or invocation behavior | `SKILL.md` |
-| Add or remove universal review gates | `protocols/output_design_review_gate.md` |
-| Change severity, scoring, readiness, or finding format | `protocols/finding_format.md` |
-| Add a new review workflow step | `protocols/review_workflow.md` |
-| Add a recurring AI-slop pattern | `research/field_reported_ai_smell_patterns.md` |
-| Add modality-specific rules | `dimensions/*.md` |
-| Change final report shape | `templates/*.md` |
-| Update package file inventory | `manifest.txt` |
-| Update dependency baseline | `dependency-baseline.json` |
-| Change Spec Kit memory | `.specify/memory/*.md` |
-| Change validator behavior | `tools/validators/*.py` |
-| Change Codex workflow prompts | `codex/prompts/*.md` |
+| Skill routing and invocation behavior | `SKILL.md` |
+| Universal review gates | `protocols/output_design_review_gate.md` |
+| Finding format and severity | `protocols/finding_format.md` |
+| Modality-specific review rules | `dimensions/*.md` |
+| Recurring field-reported patterns | `research/field_reported_ai_smell_patterns.md` |
+| Final report shapes | `templates/*.md` |
+| Spec Kit memory | `.specify/memory/*.md` |
+| Validator behavior | `tools/validators/*.py` |
+| File inventory for guardrail application | `manifest.txt` |
 
-Recommended editing rule: add a pattern only if it can be paired with a false-positive note and a concrete repair.
+Optional shared validator config may live at `config/guardrails.json`, `config/guardrails.yaml`, or `config/guardrails.yml`. Local overlays such as `config/guardrails.local.json` are rejected until merge semantics are implemented.
 
-## Review Dimensions
+Add a pattern only when it can be paired with visible evidence, a false-positive note, and a concrete repair.
 
-The skill ships with modality-specific review files:
-
-| Output type | File |
-|---|---|
-| Informational writing | `dimensions/writing_information.md` |
-| Academic, analytical, or professional reporting | `dimensions/academic_reporting.md` |
-| Marketing, brand, and sales copy | `dimensions/marketing_brand.md` |
-| Emotional, essay, and social writing | `dimensions/emotional_social.md` |
-| Web, UI, and product design | `dimensions/web_ui_design.md` |
-| Presentation decks | `dimensions/presentation_decks.md` |
-| Images and visuals | `dimensions/images_visuals.md` |
-| Code and developer outputs | `dimensions/code_developer_outputs.md` |
-| Data, charts, and dashboards | `dimensions/data_charts_dashboards.md` |
-| Localization and register | `dimensions/localization_register.md` |
-| Operational plans | `dimensions/operational_plans.md` |
-
-Use only the relevant dimensions. Over-reviewing every artifact against every dimension creates noise.
-
-## Pattern Coverage
-
-The field-reported register covers pattern families such as:
-
-- lexical inflation and over-polished diction;
-- generic throat-clearing and broad openings;
-- rhetorical contrast crutches such as “not just X, but Y”;
-- list abuse and markdown over-formatting;
-- symmetry addiction and equal-weighted structure;
-- tonal flatness and safe over-completion;
-- pseudo-depth, faux insight, and generic positive closure;
-- proof-shaped citations, fake precision, and source mismatch;
-- machine artifact leakage;
-- AI-generated commit, PR, and security-report slop;
-- SaaS-average UI, blinking-dot decoration, and copy-paste layout grammar;
-- generated visual artifacts;
-- detector overreach and false-positive risks.
-
-## Output Standards
-
-A useful review should:
-
-- cite visible evidence;
-- avoid claiming AI authorship;
-- classify the signal;
-- check false positives;
-- explain impact on the output contract;
-- name the missing specificity input;
-- give a concrete fix;
-- include a verification criterion.
-
-Minimum finding format:
-
-```md
-### P1 — Generic value proposition
-- Evidence: The hero says “Supercharge your workflow” without naming the user task.
-- Why it matters: The sentence could fit almost any SaaS product.
-- Fix: Name the workflow, input, output, and measurable result.
-- Example revision: “Turn support-call transcripts into QA-ready coaching notes in under 3 minutes.”
-- Confidence: High.
-```
-
-## Package Layout
+## Repository Layout
 
 ```text
 anti-ai-slop/
-├── AGENTS.md
-├── CLAUDE.md
-├── SKILL.md
-├── README.md
-├── PROMPTS.md
-├── manifest.txt
-├── .specify/
-├── .agents/
-├── .github/
-├── codex/
-├── docs/
-├── specs/
-├── tools/
-├── tests/
-├── assets/
-├── protocols/
-├── taxonomies/
-├── checklists/
-├── research/
-├── dimensions/
-├── templates/
-└── examples/
++-- SKILL.md
++-- AGENTS.md
++-- CLAUDE.md
++-- PROMPTS.md
++-- .specify/
++-- .agents/
++-- codex/prompts/
++-- protocols/
++-- dimensions/
++-- checklists/
++-- research/
++-- templates/
++-- tools/
++-- tests/
++-- specs/
++-- docs/
++-- assets/
++-- manifest.txt
 ```
 
-## Maintenance
+## Safety Boundaries
 
-When updating the skill:
+Anti-AI Slop does not:
 
-1. Keep `SKILL.md` and `manifest.txt` in sync with new files.
-2. Update `VERSION` and `CHANGELOG.md` for pack-level behavior, validator, workflow, or migration-tool changes.
-3. Keep new patterns evidence-based and repairable.
-4. Add false-positive guidance for any new smell category.
-5. Prefer dimension-specific guidance over one huge global checklist.
-6. Do not add detector-style authorship claims.
+- make forensic authorship claims;
+- accuse a person or organization of using AI;
+- optimize artifacts to evade AI detectors;
+- replace factual verification, legal review, security review, accessibility review, or domain expert review;
+- remove useful structure only because it resembles a common AI pattern.
 
-Validate coherence and file inventory:
+Good structure, clean grammar, common fonts, cards, bullets, and polished visuals are not defects by themselves. They become issues only when they weaken purpose, credibility, specificity, usability, or brand fit.
 
-```powershell
-python tools\validators\check_all.py --root . --format markdown
-```
+## Development
 
-`check_all.py` includes `manifest.txt` integrity. For a manual inventory comparison:
+Run the full local check before shipping changes:
 
 ```powershell
-$files = rg --files --hidden -g '!**/.git/**' -g '!**/.codex/**' -g '!**/__pycache__/**' -g '!*.pyc' | Sort-Object
-$manifest = Get-Content manifest.txt | Where-Object { $_.Trim() } | ForEach-Object { $_ -replace '/', '\' } | Sort-Object
-Compare-Object $manifest $files
-```
-
-No output means the manifest matches the repository files.
-
-Run tests:
-
-```powershell
+python tools\validators\check_all.py --root . --profile pack-self --format markdown
 python -m unittest discover -s tests
 python -m compileall tools tests
 ```
+
+For pack-level validator, workflow, migration-tool, or guardrail behavior changes:
+
+1. Update `VERSION` and `CHANGELOG.md`.
+2. Keep `SKILL.md`, `README.md`, and `manifest.txt` aligned.
+3. Preserve the rule against AI-authorship claims.
+4. Keep validators actionable: severity, path, rule, evidence, and fix.

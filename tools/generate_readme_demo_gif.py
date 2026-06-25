@@ -1,87 +1,271 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 WIDTH = 960
 HEIGHT = 540
 FRAME_COUNT = 20
-DELAY_CS = 9
+DELAY_CS = 10
 
 PALETTE = [
-    (18, 24, 32),
-    (31, 41, 55),
-    (49, 64, 84),
-    (236, 240, 244),
-    (160, 174, 192),
-    (58, 132, 255),
+    (12, 16, 23),
+    (24, 31, 42),
+    (43, 52, 66),
+    (238, 242, 247),
+    (149, 164, 184),
+    (72, 133, 237),
     (38, 196, 133),
-    (255, 183, 77),
-    (238, 92, 92),
-    (116, 89, 255),
+    (245, 158, 11),
+    (239, 68, 68),
+    (124, 92, 255),
     (14, 165, 233),
-    (22, 101, 52),
-    (64, 77, 97),
-    (245, 247, 250),
-    (96, 165, 250),
-    (15, 118, 110),
+    (20, 83, 45),
+    (63, 76, 96),
+    (246, 248, 251),
+    (147, 197, 253),
+    (20, 118, 110),
 ]
+
+FONT = {
+    " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
+    "a": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "b": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+    "c": ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+    "d": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    "e": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+    "f": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+    "g": ["01111", "10000", "10000", "10011", "10001", "10001", "01111"],
+    "h": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "i": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+    "j": ["00111", "00010", "00010", "00010", "00010", "10010", "01100"],
+    "k": ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+    "l": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+    "m": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+    "n": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+    "o": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+    "p": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+    "q": ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
+    "r": ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+    "s": ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+    "t": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+    "u": ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+    "v": ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+    "w": ["10001", "10001", "10001", "10101", "10101", "10101", "01010"],
+    "x": ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+    "y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+    "z": ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+    "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
+    "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
+    "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
+    "3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
+    "4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
+    "5": ["11111", "10000", "10000", "11110", "00001", "00001", "11110"],
+    "6": ["01110", "10000", "10000", "11110", "10001", "10001", "01110"],
+    "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+    "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
+    "9": ["01110", "10001", "10001", "01111", "00001", "00001", "01110"],
+    "$": ["00100", "01111", "10100", "01110", "00101", "11110", "00100"],
+    ":": ["00000", "00100", "00100", "00000", "00100", "00100", "00000"],
+    ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
+    ",": ["00000", "00000", "00000", "00000", "00100", "00100", "01000"],
+    "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
+    "_": ["00000", "00000", "00000", "00000", "00000", "00000", "11111"],
+    "/": ["00001", "00010", "00010", "00100", "01000", "01000", "10000"],
+    "\\": ["10000", "01000", "01000", "00100", "00010", "00010", "00001"],
+    ">": ["10000", "01000", "00100", "00010", "00100", "01000", "10000"],
+    "=": ["00000", "11111", "00000", "11111", "00000", "00000", "00000"],
+    "(": ["00010", "00100", "01000", "01000", "01000", "00100", "00010"],
+    ")": ["01000", "00100", "00010", "00010", "00010", "00100", "01000"],
+    "[": ["01110", "01000", "01000", "01000", "01000", "01000", "01110"],
+    "]": ["01110", "00010", "00010", "00010", "00010", "00010", "01110"],
+    "#": ["01010", "11111", "01010", "01010", "11111", "01010", "01010"],
+    "+": ["00000", "00100", "00100", "11111", "00100", "00100", "00000"],
+}
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def clean_line(line: str, limit: int = 86) -> str:
+    allowed = []
+    for char in line.replace("\t", "    "):
+        if 32 <= ord(char) <= 126:
+            allowed.append(char)
+        else:
+            allowed.append(" ")
+    text = "".join(allowed).strip()
+    return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
+def run_command(command: list[str], cwd: Path) -> list[str]:
+    result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
+    output = result.stdout if result.stdout.strip() else result.stderr
+    lines = [clean_line(line) for line in output.splitlines() if clean_line(line)]
+    if result.returncode != 0:
+        lines.insert(0, f"exit code: {result.returncode}")
+    return lines
+
+
+def select_lines(lines: list[str], needles: list[str], limit: int = 7) -> list[str]:
+    selected: list[str] = []
+    for needle in needles:
+        for line in lines:
+            if needle.lower() in line.lower() and line not in selected:
+                selected.append(line)
+                break
+    if len(selected) < limit:
+        for line in lines:
+            if line not in selected:
+                selected.append(line)
+            if len(selected) >= limit:
+                break
+    return selected[:limit]
+
+
+def command_lines(command: str, output: list[str], output_color: int = 6) -> list[tuple[str, int]]:
+    return [(command, 14)] + [(line, output_color) for line in output]
+
+
+def build_scenes() -> list[dict[str, object]]:
+    root = repo_root()
+    check_lines = run_command(
+        [
+            sys.executable,
+            "tools/validators/check_all.py",
+            "--root",
+            ".",
+            "--profile",
+            "pack-self",
+            "--format",
+            "markdown",
+        ],
+        root,
+    )
+    inventory_lines = run_command([sys.executable, "tools/repo_inventory.py", "--root", ".", "--format", "markdown"], root)
+
+    with tempfile.TemporaryDirectory(prefix="anti-ai-slop-demo-") as tmp:
+        target = Path(tmp) / "target-repo"
+        target.mkdir()
+        (target / "README.md").write_text("# Demo target\n", encoding="utf-8")
+        apply_lines = run_command(
+            [
+                sys.executable,
+                "tools/apply_guardrails.py",
+                "--target",
+                str(target),
+                "--mode",
+                "dry-run",
+            ],
+            root,
+        )
+
+    return [
+        {
+            "step": "validate",
+            "title": "Actual: coherence validator",
+            "lines": command_lines(
+                "$ python tools/validators/check_all.py --root .",
+                select_lines(check_lines, ["Score:", "CRITICAL:", "HIGH:", "No findings."], 7),
+            ),
+        },
+        {
+            "step": "inventory",
+            "title": "Actual: repository inventory",
+            "lines": command_lines(
+                "$ python tools/repo_inventory.py --root .",
+                select_lines(inventory_lines, ["Files:", "tools", ".md", "SKILL.md", "README.md"], 7),
+            ),
+        },
+        {
+            "step": "dry-run",
+            "title": "Actual: dry-run apply to temp repo",
+            "lines": command_lines(
+                "$ python tools/apply_guardrails.py --mode dry-run",
+                select_lines(apply_lines, ["skip existing README.md", "copy .specify", "copy tools/validators/check_all.py", "copy SKILL.md"], 7),
+            ),
+        },
+    ]
 
 
 def fill_rect(pixels: bytearray, x: int, y: int, width: int, height: int, color: int) -> None:
+    x1 = max(0, x)
+    y1 = max(0, y)
     x2 = min(WIDTH, x + width)
     y2 = min(HEIGHT, y + height)
-    for row in range(max(0, y), y2):
-        start = row * WIDTH + max(0, x)
-        pixels[start : row * WIDTH + x2] = bytes([color]) * (x2 - max(0, x))
+    for row in range(y1, y2):
+        start = row * WIDTH + x1
+        pixels[start : row * WIDTH + x2] = bytes([color]) * (x2 - x1)
 
 
-def draw_frame(index: int) -> bytes:
+def draw_text(pixels: bytearray, x: int, y: int, text: str, color: int, scale: int = 2) -> None:
+    cursor = x
+    for raw_char in text:
+        char = raw_char.lower()
+        glyph = FONT.get(char, ["11111", "10001", "00010", "00100", "00000", "00100", "00100"])
+        for row, pattern in enumerate(glyph):
+            for col, bit in enumerate(pattern):
+                if bit == "1":
+                    fill_rect(pixels, cursor + col * scale, y + row * scale, scale, scale, color)
+        cursor += 6 * scale
+
+
+def draw_badge(pixels: bytearray, x: int, y: int, label: str, color: int, active: bool) -> None:
+    fill_rect(pixels, x, y, 176, 32, color if active else 2)
+    fill_rect(pixels, x + 10, y + 10, 10, 10, 3 if active else 4)
+    draw_text(pixels, x + 30, y + 9, label, 3 if active else 4, 1)
+
+
+def draw_terminal(pixels: bytearray, scene: dict[str, object], reveal_count: int) -> None:
+    fill_rect(pixels, 300, 112, 612, 348, 1)
+    fill_rect(pixels, 300, 112, 612, 34, 2)
+    fill_rect(pixels, 320, 126, 10, 10, 8)
+    fill_rect(pixels, 340, 126, 10, 10, 7)
+    fill_rect(pixels, 360, 126, 10, 10, 6)
+    draw_text(pixels, 390, 123, str(scene["title"]), 3, 1)
+
+    lines = scene["lines"]
+    for index, (line, color) in enumerate(lines[:reveal_count]):
+        draw_text(pixels, 324, 172 + index * 25, line, color, 1)
+    if reveal_count < len(lines):
+        y = 172 + reveal_count * 25
+        fill_rect(pixels, 324, y + 2, 8, 12, 6)
+
+
+def draw_frame(index: int, scenes: list[dict[str, object]]) -> bytes:
     pixels = bytearray([0]) * (WIDTH * HEIGHT)
-
     fill_rect(pixels, 0, 0, WIDTH, HEIGHT, 0)
-    fill_rect(pixels, 0, 0, WIDTH, 72, 1)
-    fill_rect(pixels, 38, 28, 260, 14, 3)
-    fill_rect(pixels, 38, 50, 410, 8, 4)
+    fill_rect(pixels, 0, 0, WIDTH, 76, 1)
+    draw_text(pixels, 38, 24, "anti-ai-slop", 3, 3)
+    draw_text(pixels, 38, 56, "rendered from actual command output", 4, 1)
+    fill_rect(pixels, 824, 28, 86, 22, 6 if index == FRAME_COUNT - 1 else 7)
+    draw_text(pixels, 838, 35, "ready", 3, 1)
 
-    fill_rect(pixels, 40, 100, 250, 380, 1)
-    fill_rect(pixels, 320, 100, 600, 380, 1)
-    fill_rect(pixels, 60, 126, 130, 12, 3)
-    fill_rect(pixels, 340, 126, 190, 12, 3)
+    scene_index = min(len(scenes) - 1, index * len(scenes) // FRAME_COUNT)
+    scene = scenes[scene_index]
+    scene_start = scene_index * FRAME_COUNT // len(scenes)
+    scene_end = (scene_index + 1) * FRAME_COUNT // len(scenes)
+    scene_span = max(1, scene_end - scene_start)
+    frame_in_scene = index - scene_start
+    reveal_count = min(len(scene["lines"]), 1 + frame_in_scene * len(scene["lines"]) // scene_span)
 
-    steps = [
-        ("inventory", 5),
-        ("spec", 6),
-        ("tasks", 7),
-        ("validate", 10),
-        ("review", 9),
-    ]
-    active = min(len(steps) - 1, index // 4)
-    for pos, (_, color) in enumerate(steps):
-        y = 166 + pos * 54
-        step_color = color if pos <= active else 12
-        fill_rect(pixels, 64, y, 180, 26, step_color)
-        fill_rect(pixels, 78, y + 8, 90 + (pos * 16), 5, 3 if pos <= active else 4)
-        if pos < len(steps) - 1:
-            fill_rect(pixels, 150, y + 28, 8, 24, 2 if pos <= active else 12)
+    fill_rect(pixels, 40, 112, 220, 348, 1)
+    draw_text(pixels, 62, 136, "workflow", 3, 2)
+    steps = ["validate", "inventory", "dry-run"]
+    for step_index, step in enumerate(steps):
+        draw_badge(pixels, 62, 186 + step_index * 66, step, [5, 7, 10][step_index], step == scene["step"])
+        if step_index < len(steps) - 1:
+            fill_rect(pixels, 146, 222 + step_index * 66, 8, 28, 12)
 
-    fill_rect(pixels, 340, 162, 535, 56, 2)
-    fill_rect(pixels, 360, 182, 170 + index * 11, 10, 5)
-    fill_rect(pixels, 360, 200, 105, 6, 4)
+    draw_terminal(pixels, scene, reveal_count)
 
-    for card in range(4):
-        y = 246 + card * 50
-        color = [6, 7, 10, 9][card]
-        fill_rect(pixels, 340, y, 535, 34, 2)
-        fill_rect(pixels, 360, y + 10, 18, 14, color if card <= active else 12)
-        fill_rect(pixels, 392, y + 11, 260 + card * 34, 5, 3)
-        fill_rect(pixels, 392, y + 22, 120 + card * 20, 4, 4)
-
-    progress = 80 + index * 36
-    fill_rect(pixels, 340, 460, 535, 10, 12)
-    fill_rect(pixels, 340, 460, min(535, progress), 10, 6)
-    fill_rect(pixels, 840, 30, 44, 14, 6 if index == FRAME_COUNT - 1 else 7)
-
+    fill_rect(pixels, 300, 486, 612, 10, 12)
+    progress = int(612 * ((index + 1) / FRAME_COUNT))
+    fill_rect(pixels, 300, 486, progress, 10, 6)
+    draw_text(pixels, 40, 492, "real stdout -> rendered gif -> repeatable demo", 4, 1)
     return bytes(pixels)
 
 
@@ -144,6 +328,7 @@ def subblocks(data: bytes) -> bytes:
 
 
 def write_gif(path: Path) -> None:
+    scenes = build_scenes()
     min_code_size = 4
     palette_bytes = b"".join(bytes(rgb) for rgb in PALETTE)
     output = bytearray()
@@ -163,7 +348,7 @@ def write_gif(path: Path) -> None:
         output.extend(HEIGHT.to_bytes(2, "little"))
         output.extend(b"\x00")
         output.append(min_code_size)
-        output.extend(subblocks(pack_lzw(draw_frame(index), min_code_size)))
+        output.extend(subblocks(pack_lzw(draw_frame(index, scenes), min_code_size)))
 
     output.extend(b"\x3B")
     path.parent.mkdir(parents=True, exist_ok=True)

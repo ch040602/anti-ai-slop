@@ -1,6 +1,17 @@
 ---
 name: anti-ai-slop
 description: Detect and improve AI slop, generic-output, template-like, and AI-smell patterns in writing, UI, slides, visuals, code, reports, and other artifacts without making authorship claims.
+tags:
+  - codex-skill
+  - spec-kit
+  - guardrails
+  - ai-slop
+  - output-quality
+  - prompt-engineering
+  - code-review
+  - documentation-review
+  - validation
+  - agent-workflows
 ---
 
 # Anti-AI Slop Skill
