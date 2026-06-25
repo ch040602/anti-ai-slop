@@ -2,7 +2,7 @@
 
 ## Article I: Evidence Before Judgment
 
-Reviews must identify visible evidence before naming a slop pattern. The pack forbids authorship claims such as "this was written by AI" unless the user supplied verified provenance.
+Reviews must identify visible evidence before naming a slop pattern. The pack must not claim "this was written by AI" unless the user supplied verified provenance.
 
 ## Article II: Purpose Fit
 

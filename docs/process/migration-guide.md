@@ -11,4 +11,6 @@
 ## Rollout Modes
 
 - `dry-run`: inventory and report planned copies.
-- `merge`: copy missing guardrail files without deleting target files.
+- `merge`: copy missing guardrail files from the maintained `manifest.txt` surface without deleting target files.
+
+`tools/apply_guardrails.py` excludes test-only files and generated cache artifacts from migration plans.

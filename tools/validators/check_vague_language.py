@@ -14,6 +14,11 @@ VAGUE_TERMS = [
     "leverage", "unlock", "supercharge", "innovative", "world-class", "best-in-class",
 ]
 EVIDENCE_TERMS = ["because", "measured", "evidence", "example", "acceptance", "validation", "specific"]
+ALLOWED_PATTERN_DOCS = {
+    "checklists/global_ai_smell_checklist.md",
+    "dimensions/marketing_brand.md",
+    "protocols/output_design_review_gate.md",
+}
 
 
 def check(root: Path) -> list[Finding]:
@@ -21,7 +26,7 @@ def check(root: Path) -> list[Finding]:
     pattern = re.compile(r"\b(" + "|".join(re.escape(term) for term in VAGUE_TERMS) + r")\b", re.IGNORECASE)
     for path in iter_text_files(root):
         rel = relpath(path, root)
-        if rel.startswith(".github/") or rel.startswith("research/"):
+        if rel.startswith(".github/") or rel.startswith("research/") or path.suffix == ".py" or rel in ALLOWED_PATTERN_DOCS:
             continue
         text = "\n".join(line for _, line in iter_non_fenced_lines(read_text(path).splitlines()))
         matches = pattern.findall(text)

@@ -16,8 +16,16 @@ CONFIG_PATHS = [
     Path("config/guardrails.yaml"),
     Path("config/guardrails.yml"),
 ]
+UNSUPPORTED_CONFIG_PATHS = [
+    Path("config/guardrails.local.json"),
+]
 LIST_FIELDS = {"include_dirs", "exclude_dirs", "include_files", "exclude_files"}
 DICT_FIELDS = {"profiles", "severity_thresholds"}
+YAML_SUBSET = (
+    "Supported YAML subset: top-level `key: value`, inline lists such as "
+    "`include_dirs: [tools, specs]`, and block lists only for list fields. "
+    "Nested mappings are intentionally rejected; use JSON for nested profiles."
+)
 
 
 def structure_findings(data: Any, path: Path, root: Path) -> list[Finding]:
@@ -85,6 +93,7 @@ def parse_simple_yaml_mapping(text: str, path: Path, root: Path) -> tuple[dict[s
         stripped = line.strip()
         if not stripped:
             continue
+        indent = len(line) - len(line.lstrip(" "))
         if stripped.startswith("- "):
             if active_list_key is None:
                 findings.append(
@@ -101,6 +110,19 @@ def parse_simple_yaml_mapping(text: str, path: Path, root: Path) -> tuple[dict[s
             item = stripped[2:].strip().strip("\"'")
             if item:
                 data.setdefault(active_list_key, []).append(item)
+            continue
+        if indent > 0:
+            findings.append(
+                Finding(
+                    "CRITICAL",
+                    "config-integrity",
+                    relpath(path, root),
+                    "Nested YAML mappings are not supported by the guardrails config parser.",
+                    YAML_SUBSET,
+                    evidence=f"line {lineno}: {raw_line}",
+                )
+            )
+            active_list_key = None
             continue
 
         active_list_key = None
@@ -148,6 +170,18 @@ def parse_simple_yaml_mapping(text: str, path: Path, root: Path) -> tuple[dict[s
 
 def check(root: Path) -> list[Finding]:
     findings: list[Finding] = []
+    for rel in UNSUPPORTED_CONFIG_PATHS:
+        path = root / rel
+        if path.exists():
+            findings.append(
+                Finding(
+                    "HIGH",
+                    "config-integrity",
+                    relpath(path, root),
+                    "Local guardrails config overlays are not supported yet.",
+                    "Use --profile for scan selection, or move shared config into config/guardrails.json.",
+                )
+            )
     for rel in CONFIG_PATHS:
         path = root / rel
         if not path.exists():

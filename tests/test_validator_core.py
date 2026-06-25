@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import tempfile
-import subprocess
-import sys
 import unittest
 from importlib import import_module
 from pathlib import Path
@@ -12,6 +10,7 @@ from tools.validators import check_all
 from tools.validators import check_dependency_justification
 from tools.validators import check_glossary_terms
 from tools.validators import check_task_traceability
+from tools.validators.common import iter_text_files
 
 
 def write(path: Path, text: str) -> None:
@@ -19,7 +18,7 @@ def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-class ValidatorTests(unittest.TestCase):
+class ValidatorCoreTests(unittest.TestCase):
     def test_traceability_finds_missing_requirement_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -33,7 +32,9 @@ class ValidatorTests(unittest.TestCase):
             write(root / "specs/demo/spec.md", "# Spec\n\n- FR-001: Do a thing.\n\n## Out of Scope\n\n- None.\n")
             write(root / "specs/demo/plan.md", "# Plan\n")
             write(root / "specs/demo/tasks.md", "# Tasks\n\n- [ ] T001 Missing reference.\n")
+
             findings = check_all.check(root)
+
             self.assertTrue(any(f.rule == "task-traceability" and f.severity == "HIGH" for f in findings))
 
     def test_dependency_checker_treats_future_and_importlib_as_stdlib(self) -> None:
@@ -42,6 +43,46 @@ class ValidatorTests(unittest.TestCase):
             write(root / "tools/demo.py", "from __future__ import annotations\nimport importlib\nimport json\nimport traceback\n")
             findings = check_dependency_justification.check(root)
             self.assertEqual([], [f for f in findings if f.severity == "HIGH"])
+
+    def test_dependency_checker_allows_baseline_imports_and_flags_new_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "dependency-baseline.json", '{"schema_version": 1, "python_imports": ["requests"], "manifests": []}\n')
+            write(root / "tools/baseline.py", "import requests\n")
+            write(root / "tools/new_dep.py", "import httpx\n")
+
+            findings = check_dependency_justification.check(root)
+            messages = "\n".join(f.message for f in findings)
+
+            self.assertNotIn("`requests`", messages)
+            self.assertIn("`httpx`", messages)
+
+    def test_dependency_checker_reports_invalid_baseline_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "dependency-baseline.json", "{bad json")
+
+            findings = check_dependency_justification.check(root)
+
+            self.assertTrue(
+                any(
+                    f.rule == "dependency-justification"
+                    and f.severity == "HIGH"
+                    and "dependency-baseline.json" in f.path
+                    for f in findings
+                )
+            )
+
+    def test_text_file_scan_skips_repo_state_not_codex_parent_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / ".codex" / "skills" / "pack"
+            write(root / "README.md", "# Visible\n")
+            write(root / ".codex/review-driven-development/state.md", "# State\n")
+
+            scanned = {path.relative_to(root).as_posix() for path in iter_text_files(root.resolve())}
+
+            self.assertIn("README.md", scanned)
+            self.assertNotIn(".codex/review-driven-development/state.md", scanned)
 
     def test_architecture_checker_does_not_flag_read_only_string_literals(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -91,6 +132,99 @@ class ValidatorTests(unittest.TestCase):
                 )
             )
 
+    def test_check_all_reports_manifest_integrity_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "manifest.txt",
+                "README.md\n"
+                "docs/references/resource-catalog.yaml\n"
+                "stale.md\n",
+            )
+            write(root / "README.md", "# Readme\n")
+            write(root / "extra.md", "# Extra\n")
+            write(
+                root / "docs/references/resource-catalog.yaml",
+                "resources:\n"
+                "  - name: example\n"
+                "    verified_at: 2026-06-25\n"
+                "    maintenance_status: active\n"
+                "    license_checked: true\n",
+            )
+
+            findings = check_all.check(root)
+            messages = "\n".join(f.message for f in findings if f.rule == "manifest-integrity")
+
+            self.assertIn("extra.md", messages)
+            self.assertIn("stale.md", messages)
+
+    def test_check_all_feature_profile_scopes_findings_to_selected_feature(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "specs/target/spec.md", "# Spec\n\n- FR-001: Target.\n\n## Out of Scope\n\n- None.\n")
+            write(root / "specs/target/plan.md", "# Plan\n")
+            write(root / "specs/target/tasks.md", "# Tasks\n\n- [ ] T001 [FR-001] Implement target.\n")
+            write(root / "specs/other/spec.md", "# Spec\n\n- FR-001: Other.\n\n## Out of Scope\n\n- None.\n")
+            write(root / "specs/other/plan.md", "# Plan\n")
+            write(root / "specs/other/tasks.md", "# Tasks\n\n- [ ] T001 Missing reference.\n")
+
+            pack_findings = check_all.check(root, profile="pack-self")
+            feature_findings = check_all.check(root, profile="feature", feature="target")
+
+            self.assertTrue(any(f.path == "specs/other/tasks.md" for f in pack_findings))
+            self.assertEqual([], [f for f in feature_findings if f.path.startswith("specs/other/")])
+            self.assertEqual([], [f for f in feature_findings if f.severity in {"CRITICAL", "HIGH"}])
+
+    def test_check_all_rejects_unknown_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(ValueError):
+                check_all.check(Path(tmp), profile="unknown")
+
+    def test_current_repo_check_all_has_no_blocking_findings(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        findings = check_all.check(root.resolve())
+        blocking = [f for f in findings if f.severity in {"CRITICAL", "HIGH"}]
+        self.assertEqual([], blocking)
+
+    def test_config_integrity_rejects_nested_yaml_subset(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root / "config/guardrails.yaml",
+                "profiles:\n"
+                "  pack-self:\n"
+                "    include_dirs: [tools]\n",
+            )
+            check_config_integrity = import_module("tools.validators.check_config_integrity")
+
+            findings = check_config_integrity.check(root)
+            self.assertTrue(
+                any(
+                    f.rule == "config-integrity"
+                    and f.severity == "CRITICAL"
+                    and "Nested YAML" in f.message
+                    for f in findings
+                )
+            )
+
+    def test_config_integrity_rejects_local_overlay_until_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "config/guardrails.local.json", "{}\n")
+            check_config_integrity = import_module("tools.validators.check_config_integrity")
+
+            findings = check_config_integrity.check(root)
+
+            self.assertTrue(
+                any(
+                    f.rule == "config-integrity"
+                    and f.severity == "HIGH"
+                    and "guardrails.local.json" in f.path
+                    and "not supported" in f.message
+                    for f in findings
+                )
+            )
+
     def test_task_traceability_ignores_fenced_task_examples(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -104,25 +238,10 @@ class ValidatorTests(unittest.TestCase):
                 "```\n\n"
                 "- [ ] T003 [FR-001] Implement the thing.\n",
             )
+
             findings = check_task_traceability.check(root)
+
             self.assertEqual([], [f for f in findings if f.severity == "HIGH"])
-
-    def test_bootstrap_feature_replaces_path_tokens(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            write(
-                root / ".specify/templates/overrides/spec-template.md",
-                "Feature: [FEATURE NAME]\nPath: specs/[###-feature-name]/spec.md\nFiles: specs/[feature]/evidence/scan.md\n",
-            )
-            bootstrap_feature = import_module("tools.bootstrap_feature")
-            created = bootstrap_feature.bootstrap(root, "123-demo-feature", "Demo Feature", "Ship the demo")
-
-            spec_text = (root / "specs/123-demo-feature/spec.md").read_text(encoding="utf-8")
-            self.assertIn(root / "specs/123-demo-feature/spec.md", created)
-            self.assertNotIn("[###-feature-name]", spec_text)
-            self.assertNotIn("[feature]", spec_text)
-            self.assertIn("specs/123-demo-feature/spec.md", spec_text)
-            self.assertIn("specs/123-demo-feature/evidence/scan.md", spec_text)
 
     def test_template_token_checker_flags_shipped_template_tokens_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -132,6 +251,7 @@ class ValidatorTests(unittest.TestCase):
             check_template_tokens = import_module("tools.validators.check_template_tokens")
 
             findings = check_template_tokens.check(root)
+
             self.assertEqual(["specs/demo/spec.md"], [f.path for f in findings])
             self.assertTrue(all(f.rule == "template-tokens" and f.severity == "HIGH" for f in findings))
 
@@ -147,54 +267,11 @@ class ValidatorTests(unittest.TestCase):
             check_evidence_links = import_module("tools.validators.check_evidence_links")
 
             findings = check_evidence_links.check(root)
+
             self.assertEqual(1, len(findings))
             self.assertEqual("evidence-links", findings[0].rule)
             self.assertEqual("HIGH", findings[0].severity)
             self.assertIn("missing.md", findings[0].message)
-
-    def test_security_workflows_use_current_examples(self) -> None:
-        root = Path(__file__).resolve().parents[1]
-        codeql = (root / ".github/workflows/codeql.yml").read_text(encoding="utf-8")
-        gitleaks = (root / ".github/workflows/gitleaks.yml").read_text(encoding="utf-8")
-        semgrep = (root / ".github/workflows/semgrep.yml").read_text(encoding="utf-8")
-        osv = (root / ".github/workflows/osv-scanner.yml").read_text(encoding="utf-8")
-
-        self.assertIn("github/codeql-action/init@v4", codeql)
-        self.assertIn("github/codeql-action/analyze@v4", codeql)
-        self.assertIn("actions/checkout@v6", gitleaks)
-        self.assertIn("gitleaks/gitleaks-action@v3", gitleaks)
-        self.assertNotIn("semgrep/semgrep-action", semgrep)
-        self.assertIn("semgrep scan --config p/default --error", semgrep)
-        self.assertIn("google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.3.8", osv)
-        self.assertIn("merge_group:", osv)
-
-    def test_apply_guardrails_dry_run_does_not_create_missing_target(self) -> None:
-        repo_root = Path(__file__).resolve().parents[1]
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            source = root / "source"
-            target = root / "missing-target"
-            write(source / ".specify/memory/constitution.md", "# Constitution\n")
-
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(repo_root / "tools/apply_guardrails.py"),
-                    "--source",
-                    str(source),
-                    "--target",
-                    str(target),
-                    "--mode",
-                    "dry-run",
-                ],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-
-            self.assertEqual(0, result.returncode, result.stderr)
-            self.assertIn("copy .specify/memory/constitution.md", result.stdout)
-            self.assertFalse(target.exists())
 
     def test_task_traceability_catches_reverse_orphan_width_and_parallel_overlap(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -219,31 +296,13 @@ class ValidatorTests(unittest.TestCase):
 
             findings = check_task_traceability.check(root)
             messages = "\n".join(f.message for f in findings)
+
             self.assertIn("FR-002 is not referenced", messages)
             self.assertIn("missing US references: US-999", messages)
             self.assertIn("missing SC references: SC-999", messages)
             self.assertIn("missing ADR references: ADR-999", messages)
             self.assertIn("touches 6 files without an ADR", messages)
             self.assertIn("Parallel tasks share files", messages)
-
-    def test_resource_catalog_freshness_reports_missing_metadata(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            write(
-                root / "docs/references/resource-catalog.yaml",
-                "resources:\n"
-                "  - name: example\n"
-                "    type: documentation\n"
-                "    url: https://example.test/docs\n"
-                "    use: example source\n",
-            )
-            resource_catalog_freshness = import_module("tools.resource_catalog_freshness")
-
-            findings = resource_catalog_freshness.check(root)
-            messages = "\n".join(f.message for f in findings)
-            self.assertIn("verified_at", messages)
-            self.assertIn("maintenance_status", messages)
-            self.assertIn("license_checked", messages)
 
 
 if __name__ == "__main__":

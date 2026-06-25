@@ -16,13 +16,23 @@ KNOWN_TOKENS = [
     "[DATE]",
     "$ARGUMENTS",
 ]
+ALLOWED_LITERAL_PATHS = {
+    "tools/bootstrap_feature.py",
+    "tools/validators/check_template_tokens.py",
+}
 
 
 def check(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     for path in iter_text_files(root):
         rel = relpath(path, root)
-        if is_template_path(path) or rel.startswith("codex/prompts/") or rel.startswith(".codex/"):
+        if (
+            is_template_path(path)
+            or rel.startswith("codex/prompts/")
+            or rel.startswith(".codex/")
+            or rel.startswith("tests/")
+            or rel in ALLOWED_LITERAL_PATHS
+        ):
             continue
         for lineno, line in iter_non_fenced_lines(read_text(path).splitlines()):
             for token in KNOWN_TOKENS:

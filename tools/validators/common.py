@@ -46,8 +46,14 @@ def read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8", errors="replace")
 
 
-def should_skip(path: Path) -> bool:
-    return any(part in SKIP_PARTS for part in path.parts)
+def should_skip(path: Path, root: Path | None = None) -> bool:
+    check_path = path
+    if root is not None:
+        try:
+            check_path = path.relative_to(root)
+        except ValueError:
+            check_path = path
+    return any(part in SKIP_PARTS for part in check_path.parts)
 
 
 def is_template_path(path: Path) -> bool:
@@ -57,7 +63,7 @@ def is_template_path(path: Path) -> bool:
 
 def iter_text_files(root: Path) -> Iterable[Path]:
     for path in root.rglob("*"):
-        if not path.is_file() or should_skip(path):
+        if not path.is_file() or should_skip(path, root):
             continue
         if path.suffix.lower() in TEXT_SUFFIXES:
             yield path

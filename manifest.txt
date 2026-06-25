@@ -17,6 +17,7 @@
 .specify/templates/overrides/spec-template.md
 .specify/templates/overrides/tasks-template.md
 AGENTS.md
+CHANGELOG.md
 checklists/ai-slop.md
 checklists/coherence.md
 checklists/dependency.md
@@ -30,6 +31,7 @@ checklists/security.md
 codex/prompts/00-apply-pack-to-existing-repo.md
 codex/prompts/01-run-coherence-check.md
 codex/prompts/02-pr-review.md
+dependency-baseline.json
 dimensions/academic_reporting.md
 dimensions/code_developer_outputs.md
 dimensions/data_charts_dashboards.md
@@ -66,7 +68,11 @@ taxonomies/task_purpose_matrix.md
 templates/design_review_addendum.md
 templates/review_report_template.md
 templates/rewrite_brief_template.md
-tests/test_validators.py
+tests/test_catalog_freshness.py
+tests/test_helper_tools.py
+tests/test_test_layout.py
+tests/test_validator_core.py
+tests/test_workflow_examples.py
 tools/apply_guardrails.py
 tools/bootstrap_feature.py
 tools/resource_catalog_freshness.py
@@ -77,9 +83,13 @@ tools/validators/check_config_integrity.py
 tools/validators/check_dependency_justification.py
 tools/validators/check_evidence_links.py
 tools/validators/check_glossary_terms.py
+tools/validators/check_manifest_integrity.py
 tools/validators/check_placeholders.py
+tools/validators/check_resource_catalog_freshness.py
 tools/validators/check_spec_coverage.py
 tools/validators/check_task_traceability.py
 tools/validators/check_template_tokens.py
 tools/validators/check_vague_language.py
+tools/validators/check_workflow_integrity.py
 tools/validators/common.py
+VERSION

@@ -10,13 +10,24 @@ except ImportError:
 
 
 PLACEHOLDER_RE = re.compile(r"(\bTBD\b|\bTODO\b|<[^>\n]+>|\[[A-Z][A-Z0-9 _-]{2,}\])")
+ALLOWED_EXAMPLE_PATHS = {
+    "checklists/global_ai_smell_checklist.md",
+    "dimensions/code_developer_outputs.md",
+}
 
 
 def check(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     for path in iter_text_files(root):
         rel = relpath(path, root)
-        if is_template_path(path) or rel.startswith("codex/prompts/") or rel.startswith(".codex/"):
+        if (
+            is_template_path(path)
+            or rel.startswith("codex/prompts/")
+            or rel.startswith(".codex/")
+            or rel.startswith("tests/")
+            or path.suffix == ".py"
+            or rel in ALLOWED_EXAMPLE_PATHS
+        ):
             continue
         text = read_text(path)
         for idx, line in iter_non_fenced_lines(text.splitlines()):

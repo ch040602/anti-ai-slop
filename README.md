@@ -8,6 +8,20 @@ Use it when you want an agent to turn “this smells like AI slop” into an evi
 
 This repository is now also a Spec Kit style Codex guardrail pack. It adds persistent principles, reusable prompts, validator scripts, CI examples, process docs, and a sample feature spec around the original review skill.
 
+## Choose a Mode
+
+| Mode | Use when | Start here |
+|---|---|---|
+| Review skill | You want critique, rewrite guidance, or output QA for one artifact. | `$anti-ai-slop Review ...` |
+| Guardrail pack | You want repository-level specs, prompts, validators, CI examples, and migration helpers. | `python tools\validators\check_all.py --root . --profile pack-self --format markdown` |
+
+For a new checkout, run the validation gate first:
+
+```powershell
+python tools\validators\check_all.py --root . --profile pack-self --format markdown
+python -m unittest discover -s tests
+```
+
 ## Guardrail Pack Mode
 
 Use the pack when you want the anti-slop review discipline to govern a whole repository, not only one draft.
@@ -30,13 +44,40 @@ Core files:
 Run the local coherence gate:
 
 ```powershell
-python tools\validators\check_all.py --root . --format markdown
+python tools\validators\check_all.py --root . --profile pack-self --format markdown
 ```
+
+Validator surface:
+
+- `tools/validators/check_all.py`
+- `tools/validators/check_config_integrity.py`
+- `tools/validators/check_task_traceability.py`
+- `tools/validators/check_spec_coverage.py`
+- `tools/validators/check_evidence_links.py`
+- `tools/validators/check_glossary_terms.py`
+- `tools/validators/check_architecture_boundaries.py`
+- `tools/validators/check_dependency_justification.py`
+- `tools/validators/check_manifest_integrity.py`
+- `tools/validators/check_resource_catalog_freshness.py`
+- `tools/validators/check_template_tokens.py`
+- `tools/validators/check_workflow_integrity.py`
+- `tools/validators/check_vague_language.py`
+- `tools/validators/check_placeholders.py`
+
+Validation profiles:
+
+| Profile | Scope |
+|---|---|
+| `pack-self` | Full self-check for this guardrail pack. |
+| `target-repo` | Service-code-oriented paths in a repository that adopted the pack. |
+| `feature --feature 123-feature-name` | Findings scoped to one feature directory under `specs/`. |
+| `ci-strict` | CI gate using the full pack scope. |
 
 Generate inventory evidence:
 
 ```powershell
 python tools\repo_inventory.py --root . --out specs\_meta\evidence\existing-code-scan.md
+python tools\repo_inventory.py --root . --format json --out specs\_meta\evidence\existing-code-scan.json
 ```
 
 Bootstrap a feature workspace from the local Spec Kit override templates:
@@ -49,10 +90,21 @@ Apply the guardrails to another repository:
 
 ```powershell
 python tools\apply_guardrails.py --target C:\path\to\repo --mode dry-run
-python tools\apply_guardrails.py --target C:\path\to\repo --mode merge
+python tools\apply_guardrails.py --target C:\path\to\repo --mode merge --manifest-out C:\path\to\repo\.anti-ai-slop-apply-manifest.json
 ```
 
-The merge mode copies missing guardrail files only. It does not overwrite target files.
+Apply behavior:
+
+- `dry-run` reports planned copies and does not write inside the target repository.
+- `--json-out` can save a dry-run report, but the output path must be outside the target repository.
+- `merge` copies missing guardrail files from the maintained `manifest.txt` surface only.
+- Existing target files are preserved.
+- Test-only files and generated cache artifacts such as `tests/`, `__pycache__`, `*.pyc`, and `.pytest_cache` are ignored in dry-run and merge plans.
+
+Other guardrail maintenance tools:
+
+- `tools/resource_catalog_freshness.py`
+- `dependency-baseline.json`
 
 ## Prompt Collection
 
@@ -271,7 +323,7 @@ The skill should consult `research/field_reported_ai_smell_patterns.md` and stil
 
 ## Configuration
 
-This skill is configured by editing Markdown files. There is no JSON config or environment variable.
+The review skill is configured by editing Markdown files. The repository guardrail pack also supports optional shared validator config files at `config/guardrails.json`, `config/guardrails.yaml`, and `config/guardrails.yml`; local overlays such as `config/guardrails.local.json` are intentionally rejected until merge semantics are implemented. There is no environment-variable configuration surface.
 
 Common configuration points:
 
@@ -285,6 +337,7 @@ Common configuration points:
 | Add modality-specific rules | `dimensions/*.md` |
 | Change final report shape | `templates/*.md` |
 | Update package file inventory | `manifest.txt` |
+| Update dependency baseline | `dependency-baseline.json` |
 | Change Spec Kit memory | `.specify/memory/*.md` |
 | Change validator behavior | `tools/validators/*.py` |
 | Change Codex workflow prompts | `codex/prompts/*.md` |
@@ -384,12 +437,19 @@ anti-ai-slop/
 When updating the skill:
 
 1. Keep `SKILL.md` and `manifest.txt` in sync with new files.
-2. Keep new patterns evidence-based and repairable.
-3. Add false-positive guidance for any new smell category.
-4. Prefer dimension-specific guidance over one huge global checklist.
-5. Do not add detector-style authorship claims.
+2. Update `VERSION` and `CHANGELOG.md` for pack-level behavior, validator, workflow, or migration-tool changes.
+3. Keep new patterns evidence-based and repairable.
+4. Add false-positive guidance for any new smell category.
+5. Prefer dimension-specific guidance over one huge global checklist.
+6. Do not add detector-style authorship claims.
 
-Validate the file inventory:
+Validate coherence and file inventory:
+
+```powershell
+python tools\validators\check_all.py --root . --format markdown
+```
+
+`check_all.py` includes `manifest.txt` integrity. For a manual inventory comparison:
 
 ```powershell
 $files = rg --files --hidden -g '!**/.git/**' -g '!**/.codex/**' -g '!**/__pycache__/**' -g '!*.pyc' | Sort-Object
@@ -399,10 +459,9 @@ Compare-Object $manifest $files
 
 No output means the manifest matches the repository files.
 
-Validate coherence:
+Run tests:
 
 ```powershell
-python tools\validators\check_all.py --root . --format markdown
 python -m unittest discover -s tests
 python -m compileall tools tests
 ```

@@ -105,13 +105,29 @@ Use templates for final deliverables:
 Use validator tools for repository coherence:
 
 - `tools/validators/check_all.py`
+- `tools/validators/check_config_integrity.py`
 - `tools/validators/check_task_traceability.py`
 - `tools/validators/check_spec_coverage.py`
+- `tools/validators/check_evidence_links.py`
 - `tools/validators/check_glossary_terms.py`
 - `tools/validators/check_architecture_boundaries.py`
 - `tools/validators/check_dependency_justification.py`
+- `tools/validators/check_manifest_integrity.py`
+- `tools/validators/check_resource_catalog_freshness.py`
+- `tools/validators/check_template_tokens.py`
+- `tools/validators/check_workflow_integrity.py`
 - `tools/validators/check_vague_language.py`
 - `tools/validators/check_placeholders.py`
+
+Repository guardrail helpers:
+
+- `tools/repo_inventory.py`
+- `tools/bootstrap_feature.py`
+- `tools/apply_guardrails.py`
+- `tools/resource_catalog_freshness.py`
+- `dependency-baseline.json`
+
+`check_all.py` supports `--profile pack-self`, `--profile target-repo`, `--profile feature --feature FEATURE_DIR`, and `--profile ci-strict`. Optional shared validator config may live at `config/guardrails.json` or `config/guardrails.yaml`; local `config/guardrails.local.json` overlays are rejected until merge semantics are implemented. Use `--manifest-out` with `tools/apply_guardrails.py` when applying the pack to another repository. Dry-run mode must not write reports or manifests inside the target repository; use `--json-out` outside the target when a dry-run report is needed. Apply plans use the maintained `manifest.txt` surface while excluding test-only files and generated cache artifacts such as `tests/`, `__pycache__`, `*.pyc`, and `.pytest_cache`.
 
 ## Standard review workflow
 
@@ -140,6 +156,9 @@ anti-ai-slop/
 ├── AGENTS.md
 ├── SKILL.md
 ├── README.md
+├── VERSION
+├── CHANGELOG.md
+├── dependency-baseline.json
 ├── .specify/
 ├── .agents/
 ├── codex/
@@ -179,3 +198,7 @@ anti-ai-slop/
 └── examples/
     └── before_after_patterns.md
 ```
+
+## Maintenance notes
+
+For pack-level validator, workflow, migration-tool, or guardrail behavior changes, update `VERSION`, `CHANGELOG.md`, and `manifest.txt` with the same change.
