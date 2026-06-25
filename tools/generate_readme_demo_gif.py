@@ -9,7 +9,7 @@ from pathlib import Path
 WIDTH = 960
 HEIGHT = 540
 FRAME_COUNT = 20
-DELAY_CS = 10
+DELAY_CS = 35
 
 PALETTE = [
     (12, 16, 23),
@@ -90,7 +90,7 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def clean_line(line: str, limit: int = 86) -> str:
+def clean_line(line: str, limit: int = 42) -> str:
     allowed = []
     for char in line.replace("\t", "    "):
         if 32 <= ord(char) <= 126:
@@ -110,7 +110,7 @@ def run_command(command: list[str], cwd: Path) -> list[str]:
     return lines
 
 
-def select_lines(lines: list[str], needles: list[str], limit: int = 7) -> list[str]:
+def select_lines(lines: list[str], needles: list[str], limit: int = 3) -> list[str]:
     selected: list[str] = []
     for needle in needles:
         for line in lines:
@@ -169,7 +169,7 @@ def build_scenes() -> list[dict[str, object]]:
             "title": "Actual: coherence validator",
             "lines": command_lines(
                 "$ python tools/validators/check_all.py --root .",
-                select_lines(check_lines, ["Score:", "CRITICAL:", "HIGH:", "No findings."], 7),
+                select_lines(check_lines, ["Score:", "CRITICAL:", "No findings."], 3),
             ),
         },
         {
@@ -177,7 +177,7 @@ def build_scenes() -> list[dict[str, object]]:
             "title": "Actual: repository inventory",
             "lines": command_lines(
                 "$ python tools/repo_inventory.py --root .",
-                select_lines(inventory_lines, ["Files:", "tools", ".md", "SKILL.md", "README.md"], 7),
+                select_lines(inventory_lines, ["Files:", "`tools`", "`.md`"], 3),
             ),
         },
         {
@@ -185,7 +185,7 @@ def build_scenes() -> list[dict[str, object]]:
             "title": "Actual: dry-run apply to temp repo",
             "lines": command_lines(
                 "$ python tools/apply_guardrails.py --mode dry-run",
-                select_lines(apply_lines, ["skip existing README.md", "copy .specify", "copy tools/validators/check_all.py", "copy SKILL.md"], 7),
+                select_lines(apply_lines, ["skip existing README.md", "copy SKILL.md", "copy tools/validators/check_all.py"], 3),
             ),
         },
     ]
@@ -229,10 +229,10 @@ def draw_terminal(pixels: bytearray, scene: dict[str, object], reveal_count: int
 
     lines = scene["lines"]
     for index, (line, color) in enumerate(lines[:reveal_count]):
-        draw_text(pixels, 324, 172 + index * 25, line, color, 1)
+        draw_text(pixels, 324, 176 + index * 48, line, color, 2)
     if reveal_count < len(lines):
-        y = 172 + reveal_count * 25
-        fill_rect(pixels, 324, y + 2, 8, 12, 6)
+        y = 176 + reveal_count * 48
+        fill_rect(pixels, 324, y + 2, 14, 22, 6)
 
 
 def draw_frame(index: int, scenes: list[dict[str, object]]) -> bytes:
