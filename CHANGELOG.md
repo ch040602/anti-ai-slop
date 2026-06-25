@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Replaced the README demo GIF with a static workflow SVG and actual command-output excerpts.
+- Removed the README GIF generator from the maintained pack surface.
+
 ## 0.2.0 - 2026-06-25
 
 - Added Spec Kit style guardrail pack structure, Codex prompts, validators, workflow examples, and sample feature evidence.

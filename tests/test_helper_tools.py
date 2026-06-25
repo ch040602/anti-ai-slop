@@ -17,50 +17,6 @@ def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def gif_metadata(path: Path) -> tuple[int, int, int]:
-    data = path.read_bytes()
-    if data[:6] not in {b"GIF87a", b"GIF89a"}:
-        raise AssertionError("Not a GIF file")
-    width = int.from_bytes(data[6:8], "little")
-    height = int.from_bytes(data[8:10], "little")
-    flags = data[10]
-    offset = 13
-    if flags & 0x80:
-        offset += 3 * (2 ** ((flags & 0x07) + 1))
-
-    frames = 0
-    while offset < len(data):
-        block = data[offset]
-        offset += 1
-        if block == 0x3B:
-            break
-        if block == 0x21:
-            offset += 1
-            while True:
-                size = data[offset]
-                offset += 1
-                if size == 0:
-                    break
-                offset += size
-        elif block == 0x2C:
-            frames += 1
-            flags = data[offset + 8]
-            offset += 9
-            if flags & 0x80:
-                offset += 3 * (2 ** ((flags & 0x07) + 1))
-            offset += 1
-            while True:
-                size = data[offset]
-                offset += 1
-                if size == 0:
-                    break
-                offset += size
-        else:
-            raise AssertionError(f"Unexpected GIF block 0x{block:02x}")
-
-    return width, height, frames
-
-
 class HelperToolTests(unittest.TestCase):
     def test_bootstrap_feature_replaces_path_tokens(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -493,29 +449,6 @@ class HelperToolTests(unittest.TestCase):
 
             self.assertEqual(0, check_result.returncode, check_result.stdout + check_result.stderr)
             self.assertIn("Score: 100", check_result.stdout)
-
-    def test_generate_readme_demo_gif_is_reproducible_without_external_dependency(self) -> None:
-        repo_root = Path(__file__).resolve().parents[1]
-        script = repo_root / "tools/generate_readme_demo_gif.py"
-        with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / "readme-demo.gif"
-
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(script),
-                    "--out",
-                    str(out),
-                ],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-
-            self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual((960, 540, 20), gif_metadata(out))
-            self.assertNotIn("from PIL", script.read_text(encoding="utf-8"))
-            self.assertNotIn("import PIL", script.read_text(encoding="utf-8"))
 
     def test_repo_inventory_scans_codex_parent_root_and_skips_repo_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
