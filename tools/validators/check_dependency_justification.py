@@ -23,7 +23,7 @@ def python_imports(path: Path) -> set[str]:
     stdlib_like = {
         "__future__", "argparse", "ast", "collections", "csv", "dataclasses", "datetime", "fnmatch",
         "importlib", "json", "os", "pathlib", "re", "shutil", "subprocess", "sys", "tempfile",
-        "textwrap", "typing", "unittest",
+        "textwrap", "traceback", "typing", "unittest",
     }
     return {item for item in imports if item not in stdlib_like and not item.startswith("tools")}
 

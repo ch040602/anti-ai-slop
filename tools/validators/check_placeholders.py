@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 
 try:
-    from .common import Finding, is_template_path, iter_text_files, read_text, relpath, run_cli
+    from .common import Finding, is_template_path, iter_non_fenced_lines, iter_text_files, read_text, relpath, run_cli
 except ImportError:
-    from common import Finding, is_template_path, iter_text_files, read_text, relpath, run_cli
+    from common import Finding, is_template_path, iter_non_fenced_lines, iter_text_files, read_text, relpath, run_cli
 
 
 PLACEHOLDER_RE = re.compile(r"(\bTBD\b|\bTODO\b|<[^>\n]+>|\[[A-Z][A-Z0-9 _-]{2,}\])")
@@ -19,7 +19,7 @@ def check(root: Path) -> list[Finding]:
         if is_template_path(path) or rel.startswith("codex/prompts/") or rel.startswith(".codex/"):
             continue
         text = read_text(path)
-        for idx, line in enumerate(text.splitlines(), start=1):
+        for idx, line in iter_non_fenced_lines(text.splitlines()):
             if "TODO policy" in line or "TODOs" in line or "TDD" in line:
                 continue
             match = PLACEHOLDER_RE.search(line)

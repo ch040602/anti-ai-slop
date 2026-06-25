@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 
 try:
-    from .common import Finding, iter_text_files, read_text, relpath, run_cli
+    from .common import Finding, iter_non_fenced_lines, iter_text_files, read_text, relpath, run_cli
 except ImportError:
-    from common import Finding, iter_text_files, read_text, relpath, run_cli
+    from common import Finding, iter_non_fenced_lines, iter_text_files, read_text, relpath, run_cli
 
 
 VAGUE_TERMS = [
@@ -23,7 +23,7 @@ def check(root: Path) -> list[Finding]:
         rel = relpath(path, root)
         if rel.startswith(".github/") or rel.startswith("research/"):
             continue
-        text = read_text(path)
+        text = "\n".join(line for _, line in iter_non_fenced_lines(read_text(path).splitlines()))
         matches = pattern.findall(text)
         if not matches:
             continue

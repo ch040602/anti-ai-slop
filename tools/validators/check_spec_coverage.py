@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 try:
-    from .common import Finding, extract_ids, read_text, relpath, run_cli
+    from .common import Finding, extract_ids, iter_non_fenced_lines, read_text, relpath, run_cli
 except ImportError:
-    from common import Finding, extract_ids, read_text, relpath, run_cli
+    from common import Finding, extract_ids, iter_non_fenced_lines, read_text, relpath, run_cli
 
 
 REQUIRED_MEMORY = [
@@ -38,9 +38,10 @@ def check(root: Path) -> list[Finding]:
         spec_path = feature / "spec.md"
         if spec_path.exists():
             text = read_text(spec_path)
-            if not extract_ids(text, "FR"):
+            check_text = "\n".join(line for _, line in iter_non_fenced_lines(text.splitlines()))
+            if not extract_ids(check_text, "FR"):
                 findings.append(Finding("HIGH", "spec-coverage", relpath(spec_path, root), "spec.md has no FR-* requirements.", "Add functional requirements with FR-001 style IDs."))
-            if "Out of Scope" not in text:
+            if "Out of Scope" not in check_text:
                 findings.append(Finding("MEDIUM", "spec-coverage", relpath(spec_path, root), "spec.md does not define out-of-scope items.", "Add an Out of Scope section."))
     return findings
 

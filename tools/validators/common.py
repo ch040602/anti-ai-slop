@@ -63,6 +63,16 @@ def iter_text_files(root: Path) -> Iterable[Path]:
             yield path
 
 
+def iter_non_fenced_lines(lines: Sequence[str]) -> Iterable[tuple[int, str]]:
+    in_fence = False
+    for idx, line in enumerate(lines, 1):
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            yield idx, line
+
+
 def extract_ids(text: str, prefix: str) -> set[str]:
     return set(re.findall(rf"\b{re.escape(prefix)}-\d{{3,}}\b", text))
 

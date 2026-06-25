@@ -39,6 +39,12 @@ Generate inventory evidence:
 python tools\repo_inventory.py --root . --out specs\_meta\evidence\existing-code-scan.md
 ```
 
+Bootstrap a feature workspace from the local Spec Kit override templates:
+
+```powershell
+python tools\bootstrap_feature.py 123-feature-name --name "Feature Name" --arguments "Original feature request"
+```
+
 Apply the guardrails to another repository:
 
 ```powershell

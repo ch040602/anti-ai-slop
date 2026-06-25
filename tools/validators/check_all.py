@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import traceback
 from pathlib import Path
 
 try:
@@ -11,11 +12,14 @@ except ImportError:
 
 
 CHECKS = [
+    "check_config_integrity",
     "check_task_traceability",
     "check_spec_coverage",
+    "check_evidence_links",
     "check_glossary_terms",
     "check_architecture_boundaries",
     "check_dependency_justification",
+    "check_template_tokens",
     "check_vague_language",
     "check_placeholders",
 ]
@@ -31,8 +35,21 @@ def load_check(name: str):
 def check(root: Path) -> list[Finding]:
     findings: list[Finding] = []
     for name in CHECKS:
-        module = load_check(name)
-        findings.extend(module.check(root))
+        try:
+            module = load_check(name)
+            findings.extend(module.check(root))
+        except Exception as exc:
+            details = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+            findings.append(
+                Finding(
+                    severity="CRITICAL",
+                    rule="CHECK_CRASH",
+                    path=f"tools/validators/{name}.py",
+                    message=f"Validator {name} crashed: {details}",
+                    fix="Fix the crashing validator or its configuration; check_all must not report a clean score while a checker cannot run.",
+                    evidence=traceback.format_exc(limit=3).strip(),
+                )
+            )
     return findings
 
 

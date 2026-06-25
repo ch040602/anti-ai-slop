@@ -2,6 +2,7 @@ name: codeql
 
 on:
   pull_request:
+  merge_group:
   push:
 
 jobs:
@@ -11,6 +12,6 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-      - uses: github/codeql-action/analyze@v3
+      - uses: actions/checkout@v6
+      - uses: github/codeql-action/init@v4
+      - uses: github/codeql-action/analyze@v4
