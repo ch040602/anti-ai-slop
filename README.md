@@ -7,14 +7,28 @@ Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for reviewing generic,
 
 It turns vague feedback like "this feels generic" into visible evidence, concrete fixes, and validator-backed checks.
 
-## At a Glance
+## Pack Signals
 
-| Question | Answer |
-|---|---|
-| What is it? | A Codex skill plus a reusable Spec Kit guardrail pack. |
-| Best fit | README reviews, PR copy reviews, generated UI/deck/report critique, and repo-level output-quality gates. |
-| Core rule | Flag visible generic patterns, never infer who or what authored the artifact. |
-| Validation | `python tools\validators\check_all.py --root . --profile pack-self --format markdown`. |
+Anti-AI Slop is judged by whether it turns subjective review language into repeatable checks and concrete fixes. The repo keeps that visible through validator output and pack inventory rather than a model-quality benchmark.
+
+| Signal | Current value |
+|---|---:|
+| Coherence score | `100` |
+| Critical/high/medium/low findings | `0 / 0 / 0 / 0` |
+| Pack files in inventory | `97` |
+| Markdown guidance files | `60` |
+| Python validator/helper files | `24` |
+| Modality dimensions | `11` |
+| Checklists | `10` |
+| Unit test files | `5` |
+
+## Review Contract
+
+- Review visible output patterns, not authorship.
+- Pair every issue with an implementable fix.
+- Keep useful structure when it serves the artifact.
+- Block fake sources, non-reproducible claims, broken UI, or unowned code as quality failures, not as authorship accusations.
+- Validate pack coherence with standard-library Python before changing prompts, dimensions, or validators.
 
 ## Highlights
 
@@ -88,16 +102,16 @@ copy tools/validators/check_all.py
 | Review skill | Critique or rewrite one artifact. | `$anti-ai-slop Review ...` |
 | Guardrail pack | Add spec-first review and validation gates to a repo. | `python tools\apply_guardrails.py ...` |
 
-## Documentation Map
+## Review Materials
 
-| Read | Use it for |
+| Layer | Files |
 |---|---|
-| [`protocols/review_workflow.md`](protocols/review_workflow.md) | End-to-end review flow for a single artifact. |
-| [`protocols/output_design_review_gate.md`](protocols/output_design_review_gate.md) | Purpose, specificity, and design-quality gate. |
-| [`taxonomies/task_purpose_matrix.md`](taxonomies/task_purpose_matrix.md) | Choosing the right review lens by artifact type. |
-| [`dimensions/writing_information.md`](dimensions/writing_information.md) | Documentation and explanatory-writing checks. |
-| [`checklists/remediation_patterns.md`](checklists/remediation_patterns.md) | Concrete rewrite and repair patterns. |
-| [`docs/process/validation-ladder.md`](docs/process/validation-ladder.md) | How the validators fit into a review workflow. |
+| Workflow | [`protocols/review_workflow.md`](protocols/review_workflow.md), [`protocols/output_design_review_gate.md`](protocols/output_design_review_gate.md), [`protocols/finding_format.md`](protocols/finding_format.md) |
+| Task routing | [`taxonomies/task_purpose_matrix.md`](taxonomies/task_purpose_matrix.md) |
+| Modality lenses | [`dimensions/`](dimensions/) for writing, reports, brand, UI, decks, images, code, charts, localization, and plans |
+| Fix patterns | [`checklists/remediation_patterns.md`](checklists/remediation_patterns.md), [`checklists/global_ai_smell_checklist.md`](checklists/global_ai_smell_checklist.md) |
+| Field-reported patterns | [`research/field_reported_ai_smell_patterns.md`](research/field_reported_ai_smell_patterns.md) |
+| Validation ladder | [`docs/process/validation-ladder.md`](docs/process/validation-ladder.md) |
 
 ## Guardrail Pack
 
