@@ -49,6 +49,10 @@ docs/process/codex-workflows.md
 docs/process/implementation-stages.md
 docs/process/migration-guide.md
 docs/process/validation-ladder.md
+docs/mdpr-readme/accessibility-review.json
+docs/mdpr-readme/citation-review.json
+docs/mdpr-readme/evidence-ledger.json
+docs/mdpr-readme/narrative-review.json
 docs/references/resource-catalog.yaml
 docs/references/source-catalog.md
 examples/before_after_patterns.md

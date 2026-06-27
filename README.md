@@ -3,11 +3,11 @@
 [![Spec coherence](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml)
 [![No AI slop](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml)
 
-Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for reviewing generic, template-like, or low-specificity outputs without making AI-authorship claims.
+Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for reviewing generic, template-like, or low-specificity artificial intelligence (AI) outputs without making authorship claims.
 
 It turns vague feedback like "this feels generic" into visible evidence, concrete fixes, and validator-backed checks.
 
-## Pack Signals
+## Coherence Gate Currently Reports Score 100 With No Findings
 
 Anti-AI Slop is judged by whether it turns subjective review language into repeatable checks and concrete fixes. The repo keeps that visible through validator output and pack inventory rather than a model-quality benchmark.
 
@@ -29,6 +29,22 @@ Anti-AI Slop is judged by whether it turns subjective review language into repea
 - Keep useful structure when it serves the artifact.
 - Block fake sources, non-reproducible claims, broken UI, or unowned code as quality failures, not as authorship accusations.
 - Validate pack coherence with standard-library Python before changing prompts, dimensions, or validators.
+
+## Review Pipeline
+
+```text
+define output contract -> classify task purpose -> run output-design gate -> apply modality checks -> score findings -> propose concrete fixes -> run validators
+```
+
+| Pipeline stage | Primary files |
+|---|---|
+| Output contract and finding format | [`protocols/review_workflow.md`](protocols/review_workflow.md), [`protocols/finding_format.md`](protocols/finding_format.md) |
+| Purpose classification | [`taxonomies/task_purpose_matrix.md`](taxonomies/task_purpose_matrix.md) |
+| Design-quality gate | [`protocols/output_design_review_gate.md`](protocols/output_design_review_gate.md) |
+| Modality review | [`dimensions/`](dimensions/) |
+| Remediation | [`checklists/remediation_patterns.md`](checklists/remediation_patterns.md) |
+| Coherence validation | [`tools/validators/check_all.py`](tools/validators/check_all.py), [`specs/_meta/coherence-latest.md`](specs/_meta/coherence-latest.md) |
+| Public README review | [`docs/mdpr-readme/`](docs/mdpr-readme/) |
 
 ## Highlights
 
