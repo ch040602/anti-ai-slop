@@ -3,6 +3,8 @@
 [![Spec coherence](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/spec-coherence.yml)
 [![No AI slop](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml/badge.svg)](https://github.com/ch040602/anti-ai-slop/actions/workflows/no-ai-slop.yml)
 
+![Anti-AI Slop teaser: coherence score 100, zero findings, 97 pack files, and a review validation pipeline](docs/assets/readme-teaser.svg)
+
 Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for reviewing generic, template-like, or low-specificity artificial intelligence (AI) outputs without making authorship claims.
 
 It turns vague feedback like "this feels generic" into visible evidence, concrete fixes, and validator-backed checks.

@@ -18,6 +18,7 @@
 .specify/templates/overrides/tasks-template.md
 AGENTS.md
 assets/workflow.svg
+docs/assets/readme-teaser.svg
 CHANGELOG.md
 CLAUDE.md
 checklists/ai-slop.md
@@ -53,6 +54,11 @@ docs/mdpr-readme/accessibility-review.json
 docs/mdpr-readme/citation-review.json
 docs/mdpr-readme/evidence-ledger.json
 docs/mdpr-readme/narrative-review.json
+docs/mdpr-teaser/accessibility-review.json
+docs/mdpr-teaser/citation-review.json
+docs/mdpr-teaser/evidence-ledger.json
+docs/mdpr-teaser/narrative-review.json
+docs/mdpr-teaser/teaser.md
 docs/references/resource-catalog.yaml
 docs/references/source-catalog.md
 examples/before_after_patterns.md
