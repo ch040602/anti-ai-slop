@@ -7,6 +7,15 @@ Anti-AI Slop is a Codex skill and Spec Kit guardrail pack for reviewing generic,
 
 It turns vague feedback like "this feels generic" into visible evidence, concrete fixes, and validator-backed checks.
 
+## At a Glance
+
+| Question | Answer |
+|---|---|
+| What is it? | A Codex skill plus a reusable Spec Kit guardrail pack. |
+| Best fit | README reviews, PR copy reviews, generated UI/deck/report critique, and repo-level output-quality gates. |
+| Core rule | Flag visible generic patterns, never infer who or what authored the artifact. |
+| Validation | `python tools\validators\check_all.py --root . --profile pack-self --format markdown`. |
+
 ## Highlights
 
 - Review writing, UI, decks, code, charts, and plans for purpose fit and specificity.
@@ -78,6 +87,17 @@ copy tools/validators/check_all.py
 |---|---|---|
 | Review skill | Critique or rewrite one artifact. | `$anti-ai-slop Review ...` |
 | Guardrail pack | Add spec-first review and validation gates to a repo. | `python tools\apply_guardrails.py ...` |
+
+## Documentation Map
+
+| Read | Use it for |
+|---|---|
+| [`protocols/review_workflow.md`](protocols/review_workflow.md) | End-to-end review flow for a single artifact. |
+| [`protocols/output_design_review_gate.md`](protocols/output_design_review_gate.md) | Purpose, specificity, and design-quality gate. |
+| [`taxonomies/task_purpose_matrix.md`](taxonomies/task_purpose_matrix.md) | Choosing the right review lens by artifact type. |
+| [`dimensions/writing_information.md`](dimensions/writing_information.md) | Documentation and explanatory-writing checks. |
+| [`checklists/remediation_patterns.md`](checklists/remediation_patterns.md) | Concrete rewrite and repair patterns. |
+| [`docs/process/validation-ladder.md`](docs/process/validation-ladder.md) | How the validators fit into a review workflow. |
 
 ## Guardrail Pack
 
