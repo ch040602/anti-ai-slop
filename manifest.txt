@@ -59,6 +59,7 @@ docs/mdpr-teaser/citation-review.json
 docs/mdpr-teaser/evidence-ledger.json
 docs/mdpr-teaser/narrative-review.json
 docs/mdpr-teaser/teaser.md
+docs/mdpr-teaser/teaser-spec.json
 docs/references/resource-catalog.yaml
 docs/references/source-catalog.md
 examples/before_after_patterns.md
